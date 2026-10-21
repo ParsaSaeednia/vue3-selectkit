@@ -79,16 +79,6 @@ When working with vue3-selectkit, read node_modules/vue3-selectkit/AGENTS.md bef
 
 For a different installation layout, point the agent to `AGENTS.md` in the resolved package directory. The public `vue3-selectkit/AGENTS.md` subpath can also be resolved by Node tooling.
 
-## Development
-
-```sh
-npm ci
-npm run build:lib
-npm run dev
-npm run release:check
-npx playwright install chromium
-npm run test:e2e
-```
 
 The workspace contains the publishable library and VitePress docs. The playground generates complete Vue SFCs, checked against the published declarations. `check:package` installs the packed tarball into a clean application and builds it.
 
