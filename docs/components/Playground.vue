@@ -183,7 +183,7 @@ onMounted(() => {
               #option="slot: OptionSlot<Framework, unknown>"
               ><span
                 >{{ slot.option.name }}
-                <small class="muted">· {{ slot.option.category }}</small></span
+                <small class="selectkit-secondary">· {{ slot.option.category }}</small></span
               ><span v-if="slot.selected" aria-hidden="true">✓</span></template
             >
             <template
@@ -191,7 +191,7 @@ onMounted(() => {
               #single-value="slot: ValueSlot<Framework, unknown>"
               ><span class="detail-value"
                 ><strong>{{ slot.option.name }}</strong
-                ><small>{{ slot.option.category }}</small></span
+                ><small class="selectkit-secondary">{{ slot.option.category }}</small></span
               ></template
             >
             <template
@@ -419,3 +419,15 @@ onMounted(() => {
     </aside>
   </div>
 </template>
+
+<style scoped>
+.selectkit-secondary {
+  color: #667085;
+  font-size: 11px;
+}
+.selectkit-value {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.35;
+}
+</style>

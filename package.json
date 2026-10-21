@@ -15,7 +15,9 @@
     "test:e2e": "playwright test",
     "check:examples": "node scripts/check-examples.mjs",
     "check:package": "node scripts/check-package.mjs",
-    "release:check": "npm run typecheck && npm test && npm run build && npm run check:examples && npm run check:package"
+    "release:check": "npm run build:lib && npm run typecheck && npm test && npm run docs:build && npm run check:examples && npm run check:package",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.1",

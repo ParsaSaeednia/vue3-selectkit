@@ -14,7 +14,11 @@ const dir = resolve('node_modules/.cache/selectkit-examples')
 await rm(dir, { recursive: true, force: true })
 await mkdir(dir, { recursive: true })
 const base = defaultConfig()
-const cases = [...exampleCases]
+const cases = [
+  ...exampleCases,
+  { ...base, virtual: true, storedValue: 'name' },
+  { ...base, display: 'count', placeholder: '</script> }} & \"hello\"' },
+]
 for (const key of Object.keys(base))
   if (typeof base[key] === 'boolean') cases.push({ ...base, [key]: !base[key] })
 for (const multiple of [false, true])

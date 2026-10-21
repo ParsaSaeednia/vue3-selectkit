@@ -71,6 +71,7 @@ Place the slot inside `VueMultiselect`. Use `#selection` to replace the complete
 
 ```sh
 npm ci
+npm run build:lib
 npm run dev
 npm run release:check
 npx playwright install chromium
