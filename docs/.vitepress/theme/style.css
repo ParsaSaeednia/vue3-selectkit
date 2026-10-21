@@ -952,3 +952,8 @@ code {
 .article .page-subtitle {
   margin-bottom: 10px;
 }
+
+.guide-code pre {
+  overflow: visible;
+  min-width: max-content;
+}

@@ -75,7 +75,7 @@ export function generateExample(config: PlaygroundConfig): string {
   if (c.events.length) script += '\n\nfunction onEvent(...args: unknown[]) { console.log(...args) }'
   const styles =
     c.optionSlot === 'details' || c.valueSlot === 'details'
-      ? '\n<style scoped>\n.selectkit-secondary { color: #667085; font-size: 11px }\n.selectkit-value { display: flex; flex-direction: column; line-height: 1.35 }\n</style>\n'
+      ? '\n<style scoped>\n.selectkit-secondary { color: var(--vsk-muted, #667085); font-size: 11px }\n.selectkit-value { display: flex; flex-direction: column; line-height: 1.35 }\n</style>\n'
       : ''
   return `<script setup lang="ts">\n${script}\n<\/script>\n\n<template>\n<VueMultiselect\n${lines.join('\n')}\n${slots.length ? `>\n${slots.join('\n')}\n</VueMultiselect>` : '/>'}\n</template>\n${styles}`
 }

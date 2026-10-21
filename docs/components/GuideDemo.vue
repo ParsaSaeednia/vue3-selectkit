@@ -64,7 +64,7 @@ watch(
 </script>
 <template>
   <div class="guide-demo">
-    <div class="guide-code">
+    <div class="guide-code" tabindex="0" role="region" aria-label="Vue code example">
       <button class="small-button guide-copy" @click="copyDemo">
         {{ copied ? 'Copied!' : 'Copy code' }}
       </button>

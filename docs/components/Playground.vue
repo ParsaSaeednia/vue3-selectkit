@@ -228,8 +228,21 @@ onMounted(() => {
             >{{ copied ? 'Copied!' : 'Copy code' }}
           </button>
         </div>
-        <div v-if="highlighted" class="generated-code" v-html="highlighted"></div>
-        <pre v-else class="generated-code">{{ code }}</pre>
+        <div
+          v-if="highlighted"
+          class="generated-code"
+          tabindex="0"
+          role="region"
+          aria-label="Generated Vue code"
+          v-html="highlighted"
+        ></div>
+        <pre
+          v-else
+          class="generated-code"
+          tabindex="0"
+          role="region"
+          aria-label="Generated Vue code"
+          >{{ code }}</pre>
       </section>
       <section class="event-section">
         <div class="section-heading">
@@ -422,7 +435,7 @@ onMounted(() => {
 
 <style scoped>
 .selectkit-secondary {
-  color: #667085;
+  color: var(--vsk-muted, #667085);
   font-size: 11px;
 }
 .selectkit-value {
