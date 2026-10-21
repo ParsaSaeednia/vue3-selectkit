@@ -74,6 +74,7 @@ test('light and dark themes, unstyled mode and automated accessibility', async (
 test('desktop design evidence and guide values', async ({ page }) => {
   await page.goto('./')
   await expect(page.getByRole('combobox', { name: 'Search options...' })).toBeVisible()
+  await expect(page.locator('.generated-code .shiki')).toBeVisible()
   await page.screenshot({ path: join(tmpdir(), 'selectkit-playground-desktop.png') })
   await page.getByRole('link', { name: 'Value mapping', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Choose what you store' })).toBeVisible()
