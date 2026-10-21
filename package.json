@@ -1,0 +1,39 @@
+{
+  "name": "vue3-selectkit-workspace",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "vitepress dev docs --host 127.0.0.1",
+    "build:lib": "npm run build -w vue3-selectkit",
+    "docs:build": "vitepress build docs",
+    "build": "npm run build:lib && npm run docs:build",
+    "typecheck": "vue-tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "check:examples": "node scripts/check-examples.mjs",
+    "check:package": "node scripts/check-package.mjs",
+    "release:check": "npm run typecheck && npm test && npm run build && npm run check:examples && npm run check:package"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.11.1",
+    "@playwright/test": "^1.56.1",
+    "@types/node": "^24.19.2",
+    "@vitejs/plugin-vue": "^6.0.10",
+    "@vue/server-renderer": "^3.5.44",
+    "@vue/test-utils": "^2.4.6",
+    "@vue/tsconfig": "^0.9.1",
+    "jsdom": "^27.0.1",
+    "prettier": "^3.9.10",
+    "shiki": "^2.5.0",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3",
+    "vite": "^8.3.4",
+    "vitepress": "^1.6.4",
+    "vitest": "^4.0.2",
+    "vue": "^3.5.44",
+    "vue-tsc": "^3.3.13"
+  }
+}

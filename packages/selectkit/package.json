@@ -1,0 +1,62 @@
+{
+  "name": "vue3-selectkit",
+  "version": "0.1.0",
+  "description": "A typed, accessible Vue 3 select with flexible values, slots, async search and virtualization.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Parsa Saeednia",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ParsaSaeednia/vue3-selectkit.git",
+    "directory": "packages/selectkit"
+  },
+  "homepage": "https://parsasaeednia.github.io/vue3-selectkit/",
+  "bugs": {
+    "url": "https://github.com/ParsaSaeednia/vue3-selectkit/issues"
+  },
+  "keywords": [
+    "vue",
+    "vue3",
+    "select",
+    "multiselect",
+    "typescript",
+    "accessible",
+    "rtl",
+    "virtual"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "main": "./dist/selectkit.js",
+  "module": "./dist/selectkit.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/selectkit.js"
+    },
+    "./style.css": {
+      "types": "./dist/style.css.d.ts",
+      "default": "./dist/style.css"
+    }
+  },
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "peerDependencies": {
+    "vue": ">=3.5.0 <4"
+  },
+  "dependencies": {
+    "@floating-ui/vue": "^1.1.9",
+    "@tanstack/vue-virtual": "^3.13.47"
+  },
+  "scripts": {
+    "build": "vite build && vue-tsc -p tsconfig.build.json && node scripts/finish-build.mjs",
+    "prepublishOnly": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

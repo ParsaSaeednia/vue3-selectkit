@@ -1,0 +1,297 @@
+.vsk-root,
+.vsk-dropdown {
+  --vsk-accent: #059669;
+  --vsk-bg: #fff;
+  --vsk-text: #172033;
+  --vsk-muted: #667085;
+  --vsk-border: #d5dbe3;
+  --vsk-highlight: #e7f7f1;
+  --vsk-radius: 7px;
+  --vsk-font: inherit;
+  --vsk-control-height: 42px;
+  --vsk-option-height: 36px;
+  --vsk-shadow: 0 8px 22px #14203518;
+  box-sizing: border-box;
+  font-family: var(--vsk-font);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--vsk-text);
+}
+.vsk-root {
+  position: relative;
+  width: 100%;
+  text-align: start;
+}
+.vsk-root *,
+.vsk-dropdown * {
+  box-sizing: border-box;
+}
+.vsk-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-block-end: 7px;
+}
+.vsk-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: var(--vsk-control-height);
+}
+.vsk-selection {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+  padding: 7px 64px 7px 11px;
+  min-height: var(--vsk-control-height);
+  width: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+.vsk-root[dir='rtl'] .vsk-selection {
+  padding: 7px 11px 7px 64px;
+}
+.vsk-trigger {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-inline: 12px;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  border-radius: inherit;
+}
+.vsk-trigger svg,
+.vsk-clear svg,
+.vsk-tag svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.vsk-clear {
+  position: absolute;
+  inset-inline-end: 35px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 28px;
+  cursor: pointer;
+  border: 0;
+  background: none;
+  color: inherit;
+}
+.vsk-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  position: relative;
+  z-index: 1;
+}
+.vsk-tag button {
+  display: grid;
+  place-items: center;
+  pointer-events: auto;
+  background: none;
+  border: 0;
+  color: inherit;
+  padding: 1px;
+  cursor: pointer;
+}
+.vsk-placeholder {
+  color: var(--vsk-muted);
+}
+.vsk-dropdown {
+  z-index: 1000;
+  text-align: start;
+  overflow: hidden;
+}
+.vsk-listbox {
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.vsk-option,
+.vsk-select-all,
+.vsk-create {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--vsk-option-height);
+  cursor: pointer;
+  text-align: start;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+}
+.vsk-option[aria-disabled='true'] {
+  cursor: default;
+  opacity: 0.45;
+}
+.vsk-select-all,
+.vsk-create {
+  border: 0;
+  background: none;
+}
+.vsk-check {
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--vsk-border);
+  border-radius: 3px;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.vsk-check svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.vsk-search {
+  display: block;
+  width: 100%;
+  font: inherit;
+  min-height: 36px;
+}
+.vsk-state {
+  padding: 12px;
+  color: var(--vsk-muted);
+  font-size: 13px;
+}
+.vsk-state button {
+  color: var(--vsk-accent);
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
+}
+.vsk-group {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--vsk-muted);
+  padding: 6px 10px;
+  min-height: 28px;
+}
+.vsk-footer {
+  padding: 10px;
+}
+.vsk-native,
+.vsk-sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+.vsk-root[data-unstyled='false'] .vsk-control {
+  background: var(--vsk-bg);
+  border: 1px solid var(--vsk-border);
+  border-radius: var(--vsk-radius);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.vsk-root[data-unstyled='false'] .vsk-control:focus-within,
+.vsk-root[data-unstyled='false'] .vsk-control[data-open='true'] {
+  border-color: var(--vsk-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--vsk-accent) 16%, transparent);
+}
+.vsk-root[data-unstyled='false'] .vsk-control[data-invalid='true'] {
+  border-color: #dc2626;
+}
+.vsk-root[data-disabled='true'] {
+  opacity: 0.55;
+}
+.vsk-root[data-disabled='true'] button {
+  cursor: not-allowed;
+}
+.vsk-root[data-unstyled='false'] .vsk-tag {
+  background: #eef0f3;
+  padding: 2px 5px 2px 8px;
+  border-radius: 5px;
+  font-size: 13px;
+}
+.vsk-dropdown[data-unstyled='false'] {
+  background: var(--vsk-bg);
+  border: 1px solid var(--vsk-border);
+  border-radius: var(--vsk-radius);
+  box-shadow: var(--vsk-shadow);
+  padding: 6px;
+}
+.vsk-dropdown[data-unstyled='false'] .vsk-search {
+  border: 1px solid var(--vsk-border);
+  background: var(--vsk-bg);
+  color: var(--vsk-text);
+  border-radius: 5px;
+  padding: 7px 10px;
+  margin-block-end: 5px;
+  outline: none;
+}
+.vsk-dropdown[data-unstyled='false'] .vsk-search:focus {
+  border-color: var(--vsk-accent);
+}
+.vsk-dropdown[data-unstyled='false'] .vsk-option,
+.vsk-dropdown[data-unstyled='false'] .vsk-select-all,
+.vsk-dropdown[data-unstyled='false'] .vsk-create {
+  padding: 7px 10px;
+  border-radius: 4px;
+}
+.vsk-dropdown[data-unstyled='false'] .vsk-option[data-highlighted='true'],
+.vsk-dropdown[data-unstyled='false'] .vsk-select-all:hover:not(:disabled),
+.vsk-dropdown[data-unstyled='false'] .vsk-create:hover:not(:disabled) {
+  background: var(--vsk-highlight);
+}
+.vsk-dropdown[data-unstyled='false'] .vsk-check[data-checked='true'] {
+  background: var(--vsk-accent);
+  color: #fff;
+  border-color: var(--vsk-accent);
+}
+.vsk-dropdown[data-unstyled='false'] .vsk-create {
+  border-block-start: 1px solid var(--vsk-border);
+  color: var(--vsk-accent);
+}
+.vsk-dropdown button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.vsk-trigger:focus-visible,
+.vsk-clear:focus-visible,
+.vsk-tag button:focus-visible,
+.vsk-dropdown button:focus-visible {
+  outline: 2px solid var(--vsk-accent);
+  outline-offset: 2px;
+}
+.vsk-root[data-unstyled='false'] .vsk-trigger:focus {
+  outline: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vsk-root * {
+    transition: none !important;
+  }
+}
+
+.vsk-selection :is(button, a, input, select, textarea, [role='button'], [tabindex]) {
+  pointer-events: auto;
+  position: relative;
+  z-index: 2;
+}
