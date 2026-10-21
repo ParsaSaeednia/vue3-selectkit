@@ -67,6 +67,18 @@ Place the slot inside `VueMultiselect`. Use `#selection` to replace the complete
 
 `@change="(value, { reason, options }) => ..."` receives the mapped model and affected options. Bulk operations emit one change. External model updates do not echo change events.
 
+## Using with coding agents
+
+The npm package includes a [consumer agent guide](./AGENTS.md) at `node_modules/vue3-selectkit/AGENTS.md`. It explains typed models, value mapping, events, slots, remote loading, creation, styling, forms, and accessibility.
+
+Agents may not discover instructions inside dependencies automatically. Ask your agent to read the file, or add this line to your application's `AGENTS.md`:
+
+```text
+When working with vue3-selectkit, read node_modules/vue3-selectkit/AGENTS.md before implementing changes.
+```
+
+For a different installation layout, point the agent to `AGENTS.md` in the resolved package directory. The public `vue3-selectkit/AGENTS.md` subpath can also be resolved by Node tooling.
+
 ## Development
 
 ```sh

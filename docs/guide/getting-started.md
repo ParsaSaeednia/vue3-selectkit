@@ -34,3 +34,15 @@ Single selection stores a value or `null`. Add `multiple` and use an array for m
 Start in the [playground](/), configure props, subscribe to events, and try slot presets. Copy a complete Vue component into your project.
 
 Use [value mapping](./value-mapping) to choose what your model stores, and [styling](./styling) to match your application.
+
+## Work with a coding agent
+
+The installed package includes `node_modules/vue3-selectkit/AGENTS.md`, a guide to its typed API, value mapping, slots, async features, styling, forms, and accessibility. Ask your agent to read it before implementing your feature. Agents may not automatically load instructions from dependencies.
+
+You can add this line to your application's own `AGENTS.md`:
+
+```text
+When working with vue3-selectkit, read node_modules/vue3-selectkit/AGENTS.md before implementing changes.
+```
+
+Use the package's actual installation directory if your package manager or workspace places it elsewhere. The guide is also exposed at the resolvable `vue3-selectkit/AGENTS.md` package subpath.

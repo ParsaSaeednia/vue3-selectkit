@@ -14,7 +14,7 @@ if (!spec) {
     }),
   )[0]
   const unexpected = packed.files.filter(
-    (file) => !/^(dist\/|package\.json$|README\.md$|LICENSE$)/.test(file.path),
+    (file) => !/^(dist\/|package\.json$|README\.md$|AGENTS\.md$|LICENSE$)/.test(file.path),
   )
   if (unexpected.length)
     throw new Error(`Unexpected published files: ${unexpected.map((x) => x.path).join(', ')}`)
@@ -24,6 +24,7 @@ if (!spec) {
     'dist/VueMultiselect.vue.d.ts',
     'dist/style.css',
     'README.md',
+    'AGENTS.md',
     'LICENSE',
   ])
     if (!packed.files.some((f) => f.path === required)) throw new Error(`Missing ${required}`)
@@ -93,6 +94,16 @@ execFileSync(
 )
 const manifest = JSON.parse(
   await readFile(join(dir, 'node_modules/vue3-selectkit/package.json'), 'utf8'),
+)
+await readFile(join(dir, 'node_modules/vue3-selectkit/AGENTS.md'), 'utf8')
+execFileSync(
+  process.execPath,
+  [
+    '--input-type=module',
+    '-e',
+    "import { readFile } from 'node:fs/promises'; await readFile(new URL(import.meta.resolve('vue3-selectkit/AGENTS.md')), 'utf8')",
+  ],
+  { cwd: dir, stdio: 'inherit' },
 )
 if (manifest.dependencies?.vue) throw new Error('Vue must remain a peer dependency')
 console.log(`Clean consumer passed: ${manifest.name}@${manifest.version}`)

@@ -1,6 +1,6 @@
 {
   "name": "vue3-selectkit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A typed, accessible Vue 3 select with flexible values, slots, async search and virtualization.",
   "type": "module",
   "license": "MIT",
@@ -26,6 +26,7 @@
   ],
   "files": [
     "dist",
+    "AGENTS.md",
     "README.md",
     "LICENSE"
   ],
@@ -33,6 +34,7 @@
   "module": "./dist/selectkit.js",
   "types": "./dist/index.d.ts",
   "exports": {
+    "./AGENTS.md": "./AGENTS.md",
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/selectkit.js"

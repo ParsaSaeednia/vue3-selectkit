@@ -1,5 +1,5 @@
 import { tsImport } from 'tsx/esm/api'
-import { mkdir, writeFile, rm } from 'node:fs/promises'
+import { mkdir, writeFile, readFile, rm } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { execFileSync } from 'node:child_process'
 const { generateExample, exampleCases } = await tsImport(
@@ -34,6 +34,10 @@ cases.push({
 })
 for (const [i, config] of cases.entries())
   await writeFile(resolve(dir, `Example${i}.vue`), generateExample(config))
+const agentGuide = await readFile(resolve('packages/selectkit/AGENTS.md'), 'utf8')
+const agentExamples = [...agentGuide.matchAll(/```vue\n([\s\S]*?)\n```/g)]
+for (const [i, match] of agentExamples.entries())
+  await writeFile(resolve(dir, `AgentExample${i}.vue`), match[1])
 await writeFile(
   resolve(dir, 'tsconfig.json'),
   JSON.stringify({ extends: '../../../tsconfig.json', include: ['./*.vue'], exclude: [] }),
@@ -44,3 +48,4 @@ execFileSync(
   { stdio: 'inherit' },
 )
 console.log(`Type-checked ${cases.length} complete generated Vue examples.`)
+console.log(`Type-checked ${agentExamples.length} complete AGENTS.md Vue examples.`)
