@@ -119,3 +119,11 @@ Run the consuming project's existing type check, build and relevant tests. Exerc
 - Localize count announcements with `messages.selectedCount(count)`, tag summaries with `messages.moreSelected(count)` and group action names with `messages.selectGroup(label)`. Additional strings: `placeholder`, `options`, `groups`, `loadMore`, `resolveError`, `duplicate`.
 - New class parts: `groupSelect`, `tagOverflow`, `loadMore`. New slots: `group-select` (`label`, `checked`, `mixed`, `disabled`) and `tag-overflow` (`count`, `options`, `values`).
 - Reset invalidates pending creation; late aborted callbacks cannot update selection or clear a newer request's busy state. Keep honoring AbortSignal in application network requests.
+
+## Nuxt 3 and Nuxt 4
+
+- Requires Vue 3.5+; Nuxt 2 is unsupported. Use vue3-selectkit 0.2.1 or newer, which fixes runtime Boolean casting for the generic `multiple` prop. Normal `multiple` and `:multiple="true"` both store arrays. On 0.2.0, use `:multiple="true"` until upgrading. Omitted or bound-false mode stores a scalar/null; keep dynamic models consistent with the mode.
+- Add `css: ['vue3-selectkit/style.css']` to `nuxt.config.ts`. Explicitly import `VueMultiselect`; the package does not ship a Nuxt auto-import module. Default Nuxt 4 entry is `app/app.vue`; Nuxt 3 uses root `app.vue`. Follow project-specific `srcDir` settings.
+- The component supports SSR and hydration without a client-only wrapper or a custom transpile entry in the tested Nuxt 3.21.11 and 4.6.4 configurations. Seed selected option records during SSR (for example using `useAsyncData`) when initial HTML must contain their labels. The built-in resolver runs after mounting and loaders run when opening/searching on the client.
+- For teleporting, use `teleport="#teleports"`, Nuxt's SSR target. The default keeps the popup in the component. Ensure other targets exist before opening.
+- Read the [Nuxt setup guide](https://parsasaeednia.github.io/vue3-selectkit/guide/nuxt) for full instructions. Integration checks install the packed library into real Nuxt apps and cover production SSR, hydration, types and interactions.

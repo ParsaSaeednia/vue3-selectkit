@@ -16,7 +16,8 @@
     "packages/*/src/**/*.vue",
     "docs/**/*.ts",
     "docs/**/*.vue",
-    "tests/types/**/*.vue"
+    "tests/types/**/*.vue",
+    "tests/fixtures/**/*.vue"
   ],
   "exclude": ["docs/.vitepress/cache", "docs/.vitepress/dist"]
 }

@@ -24,6 +24,8 @@ bun add vue3-selectkit
 
 Requires Vue 3.5 or newer. JavaScript applications work too; TypeScript adds inferred models, callbacks, events, and slots.
 
+Using Nuxt? Follow the [Nuxt 3 and 4 setup guide](./nuxt) for global CSS, component imports, server rendering and teleport configuration.
+
 ## Your first select
 
 ```vue

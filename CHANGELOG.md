@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1
+
+- Fix Vue's runtime Boolean casting for the generic `multiple` prop. The template shorthand now preserves array models, selected labels, bulk actions and repeated native form values, while explicit true/false and dynamic boolean bindings retain their types.
+- Add compiled-template regressions for shorthand, empty attributes, explicit booleans, omitted and dynamic modes, plus server rendering/hydration and negative TypeScript checks.
+- Add production Nuxt 3.21.11 and Nuxt 4.6.4 integration checks using the packed library, with separate CI jobs that gate site deployment.
+- Document Nuxt installation, global CSS, explicit imports, SSR data, and the `#teleports` target in the website, READMEs and consumer agent guide.
+
 ## 0.2.0
 
 ### Added

@@ -9,6 +9,8 @@ const users: User[] = [{ id: 1, name: 'Ada' }]
 const object = ref<User | null>(null)
 const id = ref<number | null>(null)
 const ids = ref<number[]>([])
+const dynamicMultiple = ref<boolean>(true)
+const flexibleIds = ref<number | number[] | null>(null)
 const projectUser = (o: User) => ({ key: o.id })
 const projected = ref<{ key: number } | null>(null)
 const wrong = ref<string | null>(null)
@@ -22,6 +24,9 @@ slot.option.missing
 function wrongHandler(value: string) {
   console.log(value)
 }
+function changedMany(value: number[]) {
+  console.log(value.length)
+}
 </script>
 <template>
   <VueMultiselect v-model="object" :options="users" option-key="id" label-key="name"
@@ -29,6 +34,32 @@ function wrongHandler(value: string) {
   >
   <VueMultiselect v-model="id" :options="users" value-key="id" option-key="id" @change="changed" />
   <VueMultiselect v-model="ids" :options="users" value-key="id" option-key="id" multiple />
+  <VueMultiselect
+    v-model="ids"
+    :options="users"
+    value-key="id"
+    :multiple="true"
+    @change="changedMany"
+  />
+  <VueMultiselect
+    v-model="id"
+    :options="users"
+    value-key="id"
+    :multiple="false"
+    @change="changed"
+  />
+  <VueMultiselect
+    v-model="flexibleIds"
+    :options="users"
+    value-key="id"
+    :multiple="dynamicMultiple"
+  />
+  <!-- @vue-expect-error Shorthand multiple requires an array model -->
+  <VueMultiselect v-model="id" :options="users" value-key="id" multiple />
+  <!-- @vue-expect-error Explicit false requires a scalar model -->
+  <VueMultiselect v-model="ids" :options="users" value-key="id" :multiple="false" />
+  <!-- @vue-expect-error Multiple change events carry an array -->
+  <VueMultiselect :options="users" value-key="id" multiple @change="changed" />
   <VueMultiselect
     v-model="projected"
     :options="users"

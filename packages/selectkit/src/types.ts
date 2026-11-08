@@ -84,7 +84,8 @@ export interface SelectProps<
 > {
   modelValue?: NoInfer<ModelValue<T, K, F, M>>
   options?: readonly T[]
-  multiple?: M
+  // Keep M for model inference and expose Boolean to Vue's runtime prop compiler.
+  multiple?: M & boolean
   optionKey?: OptionField<T> | ((option: T) => OptionKey)
   labelKey?: OptionField<T>
   valueKey?: K

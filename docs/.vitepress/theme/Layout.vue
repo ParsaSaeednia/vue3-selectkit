@@ -8,6 +8,7 @@ const menu = ref(false)
 const dark = ref(false)
 const guideLinks = [
   ['Getting started', 'getting-started'],
+  ['Nuxt', 'nuxt'],
   ['Basic usage', 'basic-usage'],
   ['Value mapping', 'value-mapping'],
   ['Async options', 'async-options'],

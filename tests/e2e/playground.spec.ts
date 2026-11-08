@@ -186,3 +186,18 @@ test('saved-value resolution and installation documentation are available', asyn
     .click()
   await expect(page.getByRole('heading', { name: 'More control, less wiring' })).toBeVisible()
 })
+
+test('Nuxt setup instructions cover CSS, SSR and the fixed shorthand', async ({ page }) => {
+  await page.goto('./')
+  await page.getByRole('link', { name: 'Nuxt', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Use with Nuxt', exact: true })).toBeVisible()
+  const article = page.locator('main')
+  await expect(article).toContainText('0.2.1')
+  await expect(article).toContainText("css: ['vue3-selectkit/style.css']")
+  await expect(article).toContainText('teleport="#teleports"')
+  await expect(article).toContainText('Nuxt 3.21.11')
+  await expect(article).toContainText('4.6.4')
+  await expect(article).toContainText('npm install vue3-selectkit')
+  await expect(article).toContainText('pnpm add vue3-selectkit')
+  await expect(article).toContainText('bun add vue3-selectkit')
+})
