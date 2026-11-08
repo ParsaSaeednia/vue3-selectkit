@@ -45,3 +45,11 @@ Object options support a `disabled` field, or provide `get-option-disabled`. Gro
 ## Focus and opening
 
 Component refs expose `focus()`, `blur()`, `open()`, `close()`, and `clear()`. For generic refs use the exported `SelectExposed` interface. Disabled controls do not open or change their selection.
+
+## Read-only, compact tags and groups
+
+`readonly` permits focusing, opening and searching, and preserves native submission. Selection changes, clear, remove, creation and bulk actions are blocked. Custom rendering slots receive `disabled: true` and should honor it. External model updates and form reset remain supported.
+
+For multiple values, `:max-visible-tags="3"` shows up to three tags followed by a summary. Zero shows only the summary. It changes presentation, not the stored or submitted values. `#tag-overflow` receives the hidden `count`, resolved `options` and all hidden `values`.
+
+Combine `multiple`, `group-by` and `show-group-select` for group-level actions above the listbox. They honor the search, disabled options and selection limits, and preserve selections outside the target group. Each action emits one change with reason `select-group` or `deselect-group`.

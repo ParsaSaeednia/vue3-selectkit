@@ -9,13 +9,28 @@ export type ModelValue<T, K = undefined, F = never, M extends boolean = false> =
   ? SelectValue<T, K, F>[]
   : SelectValue<T, K, F> | null
 export type ChangeReason =
-  'select' | 'deselect' | 'clear' | 'select-all' | 'deselect-all' | 'create' | 'reset'
+  | 'select'
+  | 'deselect'
+  | 'clear'
+  | 'select-all'
+  | 'deselect-all'
+  | 'select-group'
+  | 'deselect-group'
+  | 'create'
+  | 'reset'
 export interface ChangeDetail<T> {
   reason: ChangeReason
   options: readonly T[]
 }
 export interface AsyncContext {
   signal: AbortSignal
+}
+export interface LoadOptionsContext extends AsyncContext {
+  cursor?: OptionKey
+}
+export interface OptionsPage<T> {
+  options: readonly T[]
+  nextCursor?: OptionKey | null
 }
 export type SelectPart =
   | 'root'
@@ -29,6 +44,9 @@ export type SelectPart =
   | 'listbox'
   | 'option'
   | 'group'
+  | 'groupSelect'
+  | 'tagOverflow'
+  | 'loadMore'
   | 'selectAll'
   | 'create'
   | 'state'
@@ -48,6 +66,15 @@ export interface SelectMessages {
   createError: string
   limit: string
   required: string
+  placeholder: string
+  options: string
+  groups: string
+  loadMore: string
+  resolveError: string
+  duplicate: string
+  selectedCount: (count: number) => string
+  moreSelected: (count: number) => string
+  selectGroup: (label: string) => string
 }
 export interface SelectProps<
   T,
@@ -70,9 +97,12 @@ export interface SelectProps<
   filterable?: boolean
   filterOption?: (option: T, query: string) => boolean
   showSelectAll?: boolean
+  showGroupSelect?: boolean
   maxSelected?: number
+  maxVisibleTags?: number
   clearable?: boolean
   disabled?: boolean
+  readonly?: boolean
   loading?: boolean
   placeholder?: string
   label?: string
@@ -89,7 +119,14 @@ export interface SelectProps<
   unstyled?: boolean
   classes?: Partial<Record<SelectPart, string>>
   messages?: Partial<SelectMessages>
-  loadOptions?: (query: string, context: AsyncContext) => Promise<readonly T[]>
+  loadOptions?: (
+    query: string,
+    context: LoadOptionsContext,
+  ) => Promise<readonly T[] | OptionsPage<T>>
+  resolveOptions?: (
+    values: readonly NoInfer<SelectValue<T, K, F>>[],
+    context: AsyncContext,
+  ) => Promise<readonly T[]>
   debounce?: number
   minSearchLength?: number
   createOption?: (query: string, context: AsyncContext) => T | Promise<T>
@@ -128,4 +165,5 @@ export interface SelectExposed {
   open: () => void
   close: () => void
   clear: () => void
+  loadMore: () => void
 }

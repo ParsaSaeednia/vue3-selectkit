@@ -24,3 +24,9 @@ Option rows own their listbox role and selection state. Keep option contents non
 ## Validation and direction
 
 Native required validation focuses the visible control. RTL and reduced motion are supported. Test your final colors, translations, and custom slot markup with the assistive technologies used by your audience.
+
+## Localized status messages
+
+`messages.selectedCount(count)` formats the live selection announcement. `messages.moreSelected(count)` formats the collapsed-tag summary, and `messages.selectGroup(label)` names each group action. `messages.placeholder`, `options`, `groups`, `loadMore`, `resolveError`, and `duplicate` localize the remaining built-in strings. Existing string message keys continue to work.
+
+Pagination has a keyboard-accessible Load more button alongside automatic scroll loading. Group actions are checkbox buttons outside the listbox, with checked/mixed/disabled states. Read-only controls remain focusable.

@@ -22,6 +22,9 @@ import {
 } from 'vue'
 import { autoUpdate, flip, offset, shift, size, useFloating } from '@floating-ui/vue'
 import { defaultRangeExtractor, useVirtualizer } from '@tanstack/vue-virtual'
+import { useAsyncTask } from './composables/useAsyncTask'
+import { useRemoteOptions } from './composables/useRemoteOptions'
+import { useFormReset } from './composables/useFormReset'
 import type {
   ChangeDetail,
   ChangeReason,
@@ -61,6 +64,7 @@ const emit = defineEmits<{
   create: [option: T]
   'load-error': [error: unknown]
   'create-error': [error: unknown]
+  'resolve-error': [error: unknown]
 }>()
 defineSlots<{
   option(props: OptionSlot<T, Value>): unknown
@@ -68,6 +72,13 @@ defineSlots<{
   tag(props: ValueSlot<T, Value>): unknown
   selection(props: SelectionSlot<T, Value>): unknown
   'group-label'(props: { label: string }): unknown
+  'group-select'(props: {
+    label: string
+    checked: boolean
+    mixed: boolean
+    disabled: boolean
+  }): unknown
+  'tag-overflow'(props: { count: number; options: readonly T[]; values: readonly Value[] }): unknown
   'select-all'(props: {
     checked: boolean
     mixed: boolean
@@ -78,7 +89,11 @@ defineSlots<{
   loading(props: { query: string }): unknown
   empty(props: { query: string }): unknown
   'no-results'(props: { query: string }): unknown
-  error(props: { error: unknown; retry: () => void; source: 'load' | 'create' }): unknown
+  error(props: {
+    error: unknown
+    retry: () => void
+    source: 'load' | 'create' | 'resolve'
+  }): unknown
   header(props: { query: string; close: () => void }): unknown
   footer(props: { query: string; close: () => void }): unknown
 }>()
@@ -92,6 +107,8 @@ const scrollElement = ref<HTMLElement>()
 const availableListHeight = ref<number>()
 const searchInput = ref<HTMLInputElement>()
 const nativeSelect = ref<HTMLSelectElement>()
+const loadMoreButton = ref<HTMLButtonElement>()
+const retryButton = ref<HTMLButtonElement>()
 const opened = ref(false)
 const query = ref('')
 const localValue = shallowRef<unknown>(props.multiple ? [] : null)
@@ -109,21 +126,36 @@ const snapshot = Array.isArray(value.value) ? [...value.value] : value.value
 const invalid = ref(false)
 const announcement = ref('')
 const active = ref(-1)
-const loadingRemote = ref(false)
-const creating = ref(false)
-const loadError = shallowRef<unknown>()
-const createError = shallowRef<unknown>()
-const remote = shallowRef<readonly T[]>()
+const creation = useAsyncTask((error) => emit('create-error', error))
+const { pending: creating, error: createError } = creation
+const resolution = useAsyncTask((error) => emit('resolve-error', error))
+const { error: resolveError } = resolution
+const resolved = shallowRef<readonly T[]>([])
+const mounted = ref(false)
+const remoteOptions = useRemoteOptions<T>({
+  loader: () => props.loadOptions,
+  query,
+  opened,
+  disabled: () => props.disabled,
+  debounce: () => props.debounce,
+  minSearchLength: () => props.minSearchLength,
+  onSearch: (q) => emit('search', q),
+  onError: (error) => emit('load-error', error),
+})
+const {
+  remote,
+  hasMore,
+  loading: loadingRemote,
+  error: loadError,
+  refresh: fetchOptions,
+  loadMore,
+} = remoteOptions
 const created = shallowRef<T[]>([])
 const cache = shallowRef(new Map<OptionKey, T>())
 const inheritedDir = ref<'ltr' | 'rtl'>('ltr')
-let loadController: AbortController | undefined
-let createController: AbortController | undefined
-let requestNumber = 0
-let timer: ReturnType<typeof setTimeout> | undefined
 let alive = true
 let focused = false
-let formElement: HTMLFormElement | null = null
+const locked = computed(() => !!props.disabled || !!props.readonly)
 const objectKeys = new WeakMap<object, number>()
 let objectCounter = 0
 const messages = computed<SelectMessages>(() => ({
@@ -141,6 +173,15 @@ const messages = computed<SelectMessages>(() => ({
   createError: 'Could not create option',
   limit: 'Selection limit reached',
   required: 'Please select an option.',
+  placeholder: 'Select an option',
+  options: 'Options',
+  groups: 'Select groups',
+  loadMore: 'Load more',
+  resolveError: 'Could not resolve selected options',
+  duplicate: 'Created option must have a unique key and value.',
+  selectedCount: (count) => `${count} selected`,
+  moreSelected: (count) => `+${count} more`,
+  selectGroup: (label) => `Select group ${label}`,
   ...props.messages,
 }))
 const c = (part: SelectPart) => [
@@ -202,10 +243,11 @@ const source = computed(() => {
   return [...map.values()]
 })
 watch(
-  [() => props.options, source, values],
+  [() => props.options, source, values, resolved],
   () => {
     const map = new Map<OptionKey, T>()
     for (const [key, option] of cache.value) if (selected(option)) map.set(key, option)
+    for (const o of resolved.value) if (selected(o)) map.set(keyOf(o), o)
     for (const o of props.options ?? []) map.set(keyOf(o), o)
     for (const o of source.value) map.set(keyOf(o), o)
     if (wholeObjects.value)
@@ -235,6 +277,36 @@ const selections = computed(() =>
 const selectedOptions = computed(() =>
   selections.value.flatMap((x) => (x.option === undefined ? [] : [x.option])),
 )
+const visibleSelections = computed(() =>
+  selections.value.slice(
+    0,
+    props.maxVisibleTags == null || !Number.isFinite(props.maxVisibleTags)
+      ? undefined
+      : Math.max(0, Math.floor(props.maxVisibleTags)),
+  ),
+)
+const overflowSelections = computed(() => selections.value.slice(visibleSelections.value.length))
+async function resolveMissing() {
+  const resolver = props.resolveOptions
+  resolution.abort()
+  resolveError.value = undefined
+  if (!resolver || props.disabled || !mounted.value) return
+  const missing = selections.value.filter((s) => s.option === undefined).map((s) => s.value)
+  if (!missing.length) return
+  await resolution.run(
+    (signal) => resolver(missing, { signal }),
+    (options) => {
+      resolved.value = options
+    },
+  )
+}
+watch(
+  [values, source, () => props.options, () => props.resolveOptions, () => props.disabled, mounted],
+  () => {
+    void resolveMissing()
+  },
+  { flush: 'post' },
+)
 const normalized = (s: string) =>
   s.normalize('NFKD').replace(/\p{M}/gu, '').toLocaleLowerCase().trim()
 const filtered = computed(() => {
@@ -244,25 +316,49 @@ const filtered = computed(() => {
     !query.value
   )
     return source.value
+  const normalizedQuery = normalized(query.value)
   return source.value.filter((o) =>
     props.filterOption
       ? props.filterOption(o, query.value)
-      : normalized(labelOf(o)).includes(normalized(query.value)),
+      : normalized(labelOf(o)).includes(normalizedQuery),
   )
 })
 const limit = computed(() => props.maxSelected ?? Infinity)
 const atLimit = computed(() => !!props.multiple && values.value.length >= limit.value)
 const unavailable = (o: T) => disabledOption(o) || (atLimit.value && !selected(o))
-const candidates = computed(() => filtered.value.filter((o) => !disabledOption(o)))
-const allChecked = computed(() => candidates.value.length > 0 && candidates.value.every(selected))
-const allMixed = computed(() => !allChecked.value && candidates.value.some(selected))
-const allDisabled = computed(
-  () =>
-    !!props.disabled ||
-    candidates.value.length === 0 ||
-    (!allChecked.value &&
-      values.value.length + candidates.value.filter((o) => !selected(o)).length > limit.value),
-)
+function bulkState(options: readonly T[]) {
+  const targets = options.filter((o) => !disabledOption(o))
+  const checked = targets.length > 0 && targets.every(selected)
+  return {
+    targets,
+    checked,
+    mixed: !checked && targets.some(selected),
+    disabled:
+      locked.value ||
+      targets.length === 0 ||
+      (!checked && values.value.length + targets.filter((o) => !selected(o)).length > limit.value),
+  }
+}
+const allState = computed(() => bulkState(filtered.value))
+const candidates = computed(() => allState.value.targets)
+const allChecked = computed(() => allState.value.checked)
+const allMixed = computed(() => allState.value.mixed)
+const allDisabled = computed(() => allState.value.disabled)
+function groupLabel(option: T) {
+  return typeof props.groupBy === 'function'
+    ? props.groupBy(option)
+    : String((option as Record<string, unknown>)[props.groupBy as string] ?? '')
+}
+const selectableGroups = computed(() => {
+  if (!props.groupBy || !props.multiple || !props.showGroupSelect) return []
+  const groups = new Map<string, T[]>()
+  for (const option of filtered.value) {
+    const label = groupLabel(option)
+    if (!groups.has(label)) groups.set(label, [])
+    groups.get(label)!.push(option)
+  }
+  return [...groups].map(([label, options]) => ({ label, ...bulkState(options) }))
+})
 const busy = computed(() => !!props.loading || loadingRemote.value)
 const canCreate = computed(
   () =>
@@ -270,6 +366,17 @@ const canCreate = computed(
     !!query.value.trim() &&
     !source.value.some((o) => normalized(labelOf(o)) === normalized(query.value)),
 )
+function focusPopupControl() {
+  if (props.searchable) searchInput.value?.focus()
+  else trigger.value?.focus()
+}
+watch(hasMore, (more) => {
+  if (!more && loadMoreButton.value === document.activeElement) focusPopupControl()
+})
+watch([loadError, createError, resolveError], (errors) => {
+  if (errors.every((error) => error == null) && retryButton.value === document.activeElement)
+    focusPopupControl()
+})
 type Row =
   | { kind: 'group'; label: string; key: string }
   | { kind: 'option'; option: T; index: number; key: OptionKey }
@@ -283,10 +390,7 @@ const rows = computed<Row[]>(() => {
     }))
   const groups = new Map<string, { option: T; index: number }[]>()
   filtered.value.forEach((option, index) => {
-    const label =
-      typeof props.groupBy === 'function'
-        ? props.groupBy(option)
-        : String((option as Record<string, unknown>)[props.groupBy as string] ?? '')
+    const label = groupLabel(option)
     if (!groups.has(label)) groups.set(label, [])
     groups.get(label)!.push({ option, index })
   })
@@ -355,10 +459,12 @@ function commit(next: Value[], reason: ChangeReason, options: T[]) {
   invalid.value = false
   emit('update:modelValue', model)
   emit('change', model, { reason, options })
-  announcement.value = next.length ? `${next.length} selected` : messages.value.clear
+  announcement.value = next.length
+    ? messages.value.selectedCount(next.length)
+    : messages.value.clear
 }
 function remove(v: Value) {
-  if (!props.disabled)
+  if (!locked.value)
     commit(
       values.value.filter((x) => !equal(x, v)),
       'deselect',
@@ -368,10 +474,10 @@ function remove(v: Value) {
     )
 }
 function clear() {
-  if (!props.disabled && values.value.length) commit([], 'clear', [...selectedOptions.value])
+  if (!locked.value && values.value.length) commit([], 'clear', [...selectedOptions.value])
 }
 function toggle(option: T) {
-  if (props.disabled || unavailable(option)) return
+  if (locked.value || unavailable(option)) return
   if (props.multiple && selected(option)) remove(project(option))
   else
     commit(props.multiple ? [...values.value, project(option)] : [project(option)], 'select', [
@@ -379,106 +485,63 @@ function toggle(option: T) {
     ])
   if (props.closeOnSelect ?? !props.multiple) close(true)
 }
-function toggleAll() {
-  if (allDisabled.value) return
-  const targets = candidates.value
+function toggleTargets(options: readonly T[], group = false) {
+  const state = bulkState(options)
+  if (state.disabled || busy.value) return
+  const targets = state.targets
   const targetIds = new Set(targets.map((o) => identity(project(o))))
   commit(
-    allChecked.value
+    state.checked
       ? values.value.filter((v) =>
           props.isValueEqual
             ? !targets.some((o) => equal(v, project(o)))
             : !targetIds.has(identity(v)),
         )
       : [...values.value, ...targets.filter((o) => !selected(o)).map(project)],
-    allChecked.value ? 'deselect-all' : 'select-all',
+    group
+      ? state.checked
+        ? 'deselect-group'
+        : 'select-group'
+      : state.checked
+        ? 'deselect-all'
+        : 'select-all',
     [...targets],
   )
 }
-async function fetchOptions() {
-  if (!props.loadOptions || props.disabled) return
-  loadController?.abort()
-  const number = ++requestNumber
-  loadError.value = undefined
-  if (query.value.length < (props.minSearchLength ?? 0)) {
-    loadingRemote.value = false
-    remote.value = []
-    return
-  }
-  const controller = new AbortController()
-  loadController = controller
-  loadingRemote.value = true
-  loadError.value = undefined
-  try {
-    const result = await props.loadOptions(query.value, { signal: controller.signal })
-    if (alive && number === requestNumber && !controller.signal.aborted) remote.value = result
-  } catch (error) {
-    if (alive && number === requestNumber && !controller.signal.aborted) {
-      loadError.value = error
-      emit('load-error', error)
-    }
-  } finally {
-    if (alive && number === requestNumber) loadingRemote.value = false
-  }
+function toggleAll() {
+  toggleTargets(filtered.value)
 }
-watch(
-  () => props.loadOptions,
-  (loader) => {
-    clearTimeout(timer)
-    loadController?.abort()
-    ++requestNumber
-    remote.value = undefined
-    loadError.value = undefined
-    loadingRemote.value = false
-    if (opened.value && loader) void fetchOptions()
-  },
-)
-watch(query, (q) => {
-  emit('search', q)
+watch(query, () => {
   active.value = -1
   createError.value = undefined
-  clearTimeout(timer)
-  loadController?.abort()
-  ++requestNumber
-  loadingRemote.value = false
-  if (opened.value && props.loadOptions) timer = setTimeout(fetchOptions, props.debounce ?? 250)
 })
-watch(filtered, () => {
+watch(navigable, () => {
   if (!navigable.value.includes(active.value)) active.value = navigable.value[0] ?? -1
 })
 async function create() {
-  if (!props.createOption || !canCreate.value || creating.value || props.disabled || atLimit.value)
-    return
+  const creator = props.createOption
+  if (!creator || !canCreate.value || creating.value || locked.value || atLimit.value) return
   const input = query.value.trim()
-  const controller = new AbortController()
-  createController = controller
-  creating.value = true
-  createError.value = undefined
-  try {
-    const option = await props.createOption(input, { signal: controller.signal })
-    if (!alive || controller.signal.aborted || props.disabled) return
-    if (atLimit.value) throw new Error(messages.value.limit)
-    if (
-      cache.value.has(keyOf(option)) ||
-      [...cache.value.values()].some((o) => equal(project(o), project(option)))
-    )
-      throw new Error('Created option must have a unique key and value.')
-    created.value = [...created.value, option]
-    commit(props.multiple ? [...values.value, project(option)] : [project(option)], 'create', [
-      option,
-    ])
-    emit('create', option)
-    searchInput.value?.focus()
-    query.value = ''
-    if (props.closeOnSelect ?? !props.multiple) close(true)
-  } catch (error) {
-    if (alive && !controller.signal.aborted) {
-      createError.value = error
-      emit('create-error', error)
-    }
-  } finally {
-    if (alive) creating.value = false
-  }
+  await creation.run(
+    (signal) => creator(input, { signal }),
+    (option) => {
+      if (locked.value) return
+      if (atLimit.value) throw new Error(messages.value.limit)
+      if (
+        cache.value.has(keyOf(option)) ||
+        [...cache.value.values()].some((o) => equal(project(o), project(option)))
+      )
+        throw new Error(messages.value.duplicate)
+      created.value = [...created.value, option]
+      commit(props.multiple ? [...values.value, project(option)] : [project(option)], 'create', [
+        option,
+      ])
+      emit('create', option)
+      searchInput.value?.focus()
+      query.value = ''
+      if (props.closeOnSelect ?? !props.multiple) close(true)
+    },
+  )
 }
 async function open() {
   if (props.disabled || opened.value) return
@@ -496,10 +559,7 @@ async function open() {
 function close(restore = false) {
   if (!opened.value) return
   opened.value = false
-  clearTimeout(timer)
-  loadController?.abort()
-  ++requestNumber
-  loadingRemote.value = false
+  remoteOptions.cancel()
   emit('close')
   if (restore) {
     suppressFocusOpen = true
@@ -605,6 +665,27 @@ function keydown(event: KeyboardEvent) {
     void open()
   }
 }
+let pointerOpened: boolean | undefined
+function labelClick() {
+  focus()
+  void open()
+}
+function triggerClick(event: MouseEvent) {
+  const wasOpen = event.detail > 0 && pointerOpened !== undefined ? pointerOpened : opened.value
+  pointerOpened = undefined
+  if (wasOpen) close()
+  else void open()
+}
+function onListScroll() {
+  const el = scrollElement.value
+  if (
+    el &&
+    el.scrollHeight - el.scrollTop - el.clientHeight < 48 &&
+    !loadError.value &&
+    !props.loading
+  )
+    void loadMore()
+}
 function controlClick(event: MouseEvent) {
   if ((event.target as HTMLElement).closest('button,a,input,select,textarea,[role=button]')) return
   if (opened.value) close()
@@ -633,6 +714,8 @@ function outside(event: PointerEvent) {
 function reset(event: Event) {
   queueMicrotask(() => {
     if (event.defaultPrevented || !alive) return
+    creation.abort()
+    createError.value = undefined
     commit(
       (props.multiple
         ? Array.isArray(snapshot)
@@ -659,34 +742,27 @@ function invalidForm(event: Event) {
   announcement.value = messages.value.required
   focus()
 }
-watch(
-  () => props.disabled,
-  (d) => {
-    if (d) {
-      close()
-      createController?.abort()
-      creating.value = false
-    }
-  },
-)
+watch([() => props.disabled, () => props.readonly], ([disabled, readonly]) => {
+  if (disabled) {
+    close()
+    resolution.abort()
+  }
+  if (disabled || readonly) creation.abort()
+})
 watch(values, () => {
   if (values.value.length) invalid.value = false
 })
+useFormReset(nativeSelect, reset)
 onMounted(() => {
+  mounted.value = true
   document.addEventListener('pointerdown', outside)
-  formElement = nativeSelect.value?.form ?? null
-  formElement?.addEventListener('reset', reset)
 })
 onBeforeUnmount(() => {
   alive = false
-  clearTimeout(timer)
   clearTimeout(typeaheadTimer)
-  loadController?.abort()
-  createController?.abort()
   document.removeEventListener('pointerdown', outside)
-  formElement?.removeEventListener('reset', reset)
 })
-defineExpose({ focus, blur, open, close, clear })
+defineExpose({ focus, blur, open, close, clear, loadMore })
 </script>
 
 <template>
@@ -697,10 +773,18 @@ defineExpose({ focus, blur, open, close, clear })
     :dir="dir"
     :data-unstyled="!!unstyled"
     :data-disabled="!!disabled"
+    :data-readonly="!!readonly"
     @focusin="onFocus"
     @focusout="onBlur"
   >
-    <label v-if="label" :id="`${uid}-label`" :for="uid" class="vsk-label">{{ label }}</label>
+    <label
+      v-if="label"
+      :id="`${uid}-label`"
+      :for="uid"
+      class="vsk-label"
+      @click.prevent="labelClick"
+      >{{ label }}</label
+    >
     <div
       ref="control"
       :class="c('control')"
@@ -715,29 +799,40 @@ defineExpose({ focus, blur, open, close, clear })
           :values="values"
           :remove="remove"
           :clear="clear"
-          :disabled="!!disabled"
+          :disabled="locked"
         >
           <template v-if="multiple && selections.length">
-            <span v-for="s in selections" :key="s.key" :class="c('tag')">
+            <span v-for="s in visibleSelections" :key="s.key" :class="c('tag')">
               <slot
                 v-if="s.option !== undefined"
                 name="tag"
                 :option="s.option"
                 :value="s.value"
                 :label="s.label"
-                :disabled="!!disabled"
+                :disabled="locked"
                 :remove="() => remove(s.value)"
                 >{{ s.label }}</slot
               >
               <template v-else>{{ s.label }}</template>
               <button
                 type="button"
-                :disabled="disabled"
+                :disabled="locked"
                 :aria-label="`${messages.remove} ${s.label}`"
                 @click.stop="remove(s.value)"
               >
                 <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m5 5 6 6m0-6-6 6" /></svg>
               </button>
+            </span>
+            <span v-if="overflowSelections.length" :class="c('tagOverflow')">
+              <slot
+                name="tag-overflow"
+                :count="overflowSelections.length"
+                :options="
+                  overflowSelections.flatMap((s) => (s.option === undefined ? [] : [s.option]))
+                "
+                :values="overflowSelections.map((s) => s.value)"
+                >{{ messages.moreSelected(overflowSelections.length) }}</slot
+              >
             </span>
           </template>
           <template v-else-if="selections[0]">
@@ -747,13 +842,13 @@ defineExpose({ focus, blur, open, close, clear })
               :option="selections[0].option"
               :value="selections[0].value"
               :label="selections[0].label"
-              :disabled="!!disabled"
+              :disabled="locked"
               :remove="clear"
               >{{ selections[0].label }}</slot
             >
             <template v-else>{{ selections[0].label }}</template>
           </template>
-          <span v-else class="vsk-placeholder">{{ placeholder ?? 'Select an option' }}</span>
+          <span v-else class="vsk-placeholder">{{ placeholder ?? messages.placeholder }}</span>
         </slot>
       </div>
       <button
@@ -771,17 +866,21 @@ defineExpose({ focus, blur, open, close, clear })
           opened && !searchable && active >= 0 ? `${uid}-option-${active}` : undefined
         "
         :aria-label="
-          ariaLabel ?? (!label && !ariaLabelledby ? (placeholder ?? 'Select an option') : undefined)
+          ariaLabel ??
+          (!label && !ariaLabelledby ? (placeholder ?? messages.placeholder) : undefined)
         "
         :aria-labelledby="ariaLabelledby ?? (label ? `${uid}-label` : undefined)"
         :aria-describedby="ariaDescribedby"
         :aria-required="required"
         :aria-invalid="invalid || undefined"
-        @click="opened ? close() : open()"
+        :aria-readonly="readonly && !(searchable && opened) ? true : undefined"
+        @pointerdown="pointerOpened = opened"
+        @pointercancel="pointerOpened = undefined"
+        @click="triggerClick"
         @keydown="keydown"
       >
         <span class="vsk-sr-only">{{
-          selections.map((s) => s.label).join(', ') || placeholder || 'Select an option'
+          selections.map((s) => s.label).join(', ') || placeholder || messages.placeholder
         }}</span>
         <svg
           viewBox="0 0 16 16"
@@ -796,14 +895,13 @@ defineExpose({ focus, blur, open, close, clear })
         type="button"
         :class="c('clear')"
         :aria-label="messages.clear"
-        :disabled="disabled"
+        :disabled="locked"
         @click.stop="clear"
       >
         <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 4 8 8m0-8-8 8" /></svg>
       </button>
     </div>
     <select
-      v-if="name || required"
       ref="nativeSelect"
       class="vsk-native"
       tabindex="-1"
@@ -859,6 +957,7 @@ defineExpose({ focus, blur, open, close, clear })
           :aria-checked="allMixed ? 'mixed' : allChecked"
           :disabled="allDisabled || busy"
           :title="allDisabled && candidates.length ? messages.limit : undefined"
+          @pointerdown.prevent
           @click="toggleAll"
         >
           <slot
@@ -881,25 +980,65 @@ defineExpose({ focus, blur, open, close, clear })
         <div v-if="busy" :class="c('state')" role="status">
           <slot name="loading" :query="query">{{ messages.loading }}</slot>
         </div>
-        <div v-if="loadError || createError" :class="c('state')" role="alert">
+        <div v-if="loadError || createError || resolveError" :class="c('state')" role="alert">
           <slot
             name="error"
-            :error="loadError ?? createError"
-            :retry="loadError ? fetchOptions : create"
-            :source="loadError ? 'load' : 'create'"
-            >{{ loadError ? messages.loadError : messages.createError }}
-            <button type="button" @click="loadError ? fetchOptions() : create()">
+            :error="loadError ?? createError ?? resolveError"
+            :retry="loadError ? remoteOptions.retry : createError ? create : resolveMissing"
+            :source="loadError ? 'load' : createError ? 'create' : 'resolve'"
+            >{{
+              loadError
+                ? messages.loadError
+                : createError
+                  ? messages.createError
+                  : messages.resolveError
+            }}
+            <button
+              ref="retryButton"
+              type="button"
+              @pointerdown.prevent
+              @click="loadError ? remoteOptions.retry() : createError ? create() : resolveMissing()"
+            >
               {{ messages.retry }}
             </button></slot
           >
+        </div>
+        <div
+          v-if="selectableGroups.length"
+          class="vsk-group-actions"
+          role="group"
+          :aria-label="messages.groups"
+        >
+          <button
+            v-for="group in selectableGroups"
+            :key="group.label"
+            type="button"
+            role="checkbox"
+            :class="c('groupSelect')"
+            :aria-label="messages.selectGroup(group.label)"
+            :aria-checked="group.mixed ? 'mixed' : group.checked"
+            :disabled="group.disabled || busy"
+            @pointerdown.prevent
+            @click="toggleTargets(group.targets, true)"
+          >
+            <slot
+              name="group-select"
+              :label="group.label"
+              :checked="group.checked"
+              :mixed="group.mixed"
+              :disabled="group.disabled || busy"
+              >{{ group.label }}</slot
+            >
+          </button>
         </div>
         <div
           ref="scrollElement"
           :id="`${uid}-listbox`"
           :class="c('listbox')"
           role="listbox"
-          :aria-label="label ?? ariaLabel ?? placeholder ?? 'Options'"
+          :aria-label="label ?? ariaLabel ?? placeholder ?? messages.options"
           :aria-multiselectable="multiple ? true : undefined"
+          @scroll.passive="onListScroll"
           :aria-busy="busy"
           :style="{ maxHeight: `${Math.min(maxHeight ?? 256, availableListHeight ?? Infinity)}px` }"
         >
@@ -939,7 +1078,7 @@ defineExpose({ focus, blur, open, close, clear })
                 :class="c('option')"
                 role="option"
                 :aria-selected="selected(item.row.option)"
-                :aria-disabled="unavailable(item.row.option) || undefined"
+                :aria-disabled="readonly || unavailable(item.row.option) || undefined"
                 :aria-posinset="item.row.index + 1"
                 :aria-setsize="filtered.length"
                 :data-highlighted="active === item.row.index"
@@ -965,7 +1104,7 @@ defineExpose({ focus, blur, open, close, clear })
                   :label="labelOf(item.row.option)"
                   :selected="selected(item.row.option)"
                   :highlighted="active === item.row.index"
-                  :disabled="unavailable(item.row.option)"
+                  :disabled="readonly || unavailable(item.row.option)"
                 >
                   <span
                     v-if="multiple"
@@ -988,12 +1127,25 @@ defineExpose({ focus, blur, open, close, clear })
           v-if="canCreate"
           type="button"
           :class="c('create')"
-          :disabled="creating || atLimit || disabled"
+          :disabled="atLimit || locked"
+          :aria-disabled="creating || atLimit || locked"
+          @pointerdown.prevent
           @click="create"
         >
           <slot name="create-option" :query="query" :loading="creating">{{
             creating ? messages.loading : `${messages.create} “${query.trim()}”`
           }}</slot>
+        </button>
+        <button
+          v-if="hasMore"
+          ref="loadMoreButton"
+          type="button"
+          :class="c('loadMore')"
+          :aria-disabled="busy"
+          @pointerdown.prevent
+          @click="!busy && loadMore()"
+        >
+          {{ busy ? messages.loading : messages.loadMore }}
         </button>
         <div v-if="$slots.footer" :class="c('footer')">
           <slot name="footer" :query="query" :close="close" />

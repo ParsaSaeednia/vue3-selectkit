@@ -295,3 +295,44 @@
   position: relative;
   z-index: 2;
 }
+
+.vsk-tag-overflow {
+  color: var(--vsk-muted);
+  white-space: nowrap;
+}
+.vsk-root[data-readonly='true'] .vsk-selection {
+  pointer-events: auto;
+  user-select: text;
+}
+.vsk-dropdown button[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: default;
+}
+.vsk-group-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 0;
+}
+.vsk-group-select,
+.vsk-load-more {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.vsk-dropdown[data-unstyled='false'] .vsk-group-select,
+.vsk-dropdown[data-unstyled='false'] .vsk-load-more {
+  border: 1px solid var(--vsk-border);
+  border-radius: 4px;
+  background: var(--vsk-bg);
+  padding: 5px 9px;
+}
+.vsk-dropdown[data-unstyled='false'] .vsk-group-select[aria-checked='true'],
+.vsk-dropdown[data-unstyled='false'] .vsk-group-select[aria-checked='mixed'] {
+  background: var(--vsk-highlight);
+  border-color: var(--vsk-accent);
+}
+.vsk-load-more {
+  width: 100%;
+  margin-block-start: 6px;
+}

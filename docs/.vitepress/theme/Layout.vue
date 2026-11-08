@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
+import { version } from '../../../packages/selectkit/package.json'
 import { useData, withBase, useRoute } from 'vitepress'
 const { frontmatter, page } = useData()
 const route = useRoute()
@@ -10,6 +11,7 @@ const guideLinks = [
   ['Basic usage', 'basic-usage'],
   ['Value mapping', 'value-mapping'],
   ['Async options', 'async-options'],
+  ['Advanced features', 'advanced-features'],
   ['Create options', 'create-options'],
   ['Virtual scrolling', 'virtual-scrolling'],
   ['Styling', 'styling'],
@@ -95,7 +97,7 @@ watch(
       >{{ kind }}</a
     >
     <div class="sidebar-bottom">
-      <a href="https://www.npmjs.com/package/vue3-selectkit">npm · v0.1.0</a>
+      <a href="https://www.npmjs.com/package/vue3-selectkit">npm · v{{ version }}</a>
     </div>
   </aside>
   <main id="main" :class="['site-main', { 'playground-main': frontmatter.playground }]">

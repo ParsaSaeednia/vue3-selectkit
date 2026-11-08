@@ -86,6 +86,33 @@ export const propDocs = {
     control: 'Select all row',
     group: 'Selection',
   },
+  showGroupSelect: {
+    type: 'boolean',
+    default: 'false',
+    description:
+      'Select or deselect enabled matching loaded options within a group. Requires multiple and groupBy.',
+    control: 'Group selection',
+    group: 'Selection',
+  },
+  maxVisibleTags: {
+    type: 'number',
+    default: 'Unlimited',
+    description:
+      'Maximum visible tags; remaining values appear in a localized overflow summary. Does not limit the model.',
+  },
+  readonly: {
+    type: 'boolean',
+    default: 'false',
+    description: 'Keep focus, search and form submission while preventing selection changes.',
+    control: 'Read only',
+    group: 'Behavior',
+  },
+  resolveOptions: {
+    type: '(values, { signal }) => Promise<readonly Option[]>',
+    default: '—',
+    description:
+      'Resolve missing selected records automatically, including before the first opening. Does not change v-model.',
+  },
   maxSelected: {
     type: 'number',
     default: 'Infinity',
@@ -192,9 +219,10 @@ export const propDocs = {
     description: 'Translate all built-in action, status and error strings.',
   },
   loadOptions: {
-    type: '(query, { signal }) => Promise<readonly Option[]>',
+    type: '(query, { signal, cursor }) => Promise<readonly Option[] | OptionsPage<Option>>',
     default: '—',
-    description: 'Optional remote loader; debounced, abortable, stale-safe.',
+    description:
+      'Debounced, abortable remote loader. Return { options, nextCursor } for pagination; null/omitted cursor ends the list.',
     control: 'Remote loading',
     group: 'Behavior',
   },
@@ -253,7 +281,7 @@ export const eventDocs = {
   'update:modelValue':
     'The complete typed model. Emitted for a committed selection action; use v-model.',
   change:
-    '(value, { reason, options }) — reasons: select, deselect, clear, select-all, deselect-all, create, reset. One event per action; never echoed for external model changes.',
+    '(value, { reason, options }) — reasons: select, deselect, clear, select-all, deselect-all, select-group, deselect-group, create, reset. One event per action; never echoed for external model changes.',
   search:
     '(query: string) — emitted immediately as search changes; debounce applies only to loading.',
   open: 'Dropdown opened.',
@@ -263,6 +291,8 @@ export const eventDocs = {
   create: '(option: Option) — creation succeeded and the option was selected.',
   'load-error': '(error: unknown) — loader failed; aborted and stale requests are ignored.',
   'create-error': '(error: unknown) — creation failed or returned a duplicate key/value.',
+  'resolve-error':
+    '(error: unknown) — selected-record resolution failed; retry is available in the error slot.',
 }
 export const slotDocs = {
   option:
@@ -273,12 +303,15 @@ export const slotDocs = {
   selection:
     '{ options, values, disabled, remove, clear } — replace the complete selected display; unresolved values remain in values.',
   'group-label': '{ label } — visual group heading.',
+  'group-select':
+    '{ label, checked, mixed, disabled } — group action contents; the component owns the checkbox button.',
+  'tag-overflow': '{ count, options, values } — hidden tags; unresolved values remain in values.',
   'select-all': '{ checked, mixed, disabled, label } — contents of the accessible bulk action.',
   'create-option': '{ query, loading } — contents of the create action.',
   loading: '{ query } — loading status.',
   empty: '{ query } — no available options.',
   'no-results': '{ query } — no search matches.',
-  error: "{ error, retry, source: 'load' | 'create' } — recoverable error UI.",
+  error: "{ error, retry, source: 'load' | 'create' | 'resolve' } — recoverable error UI.",
   header: '{ query, close } — dropdown header.',
   footer: '{ query, close } — dropdown footer.',
 }
@@ -286,6 +319,11 @@ export const defaultConfig = () => ({
   multiple: true,
   storedValue: 'id',
   showSelectAll: true,
+  showGroupSelect: false,
+  maxVisibleTags: 3,
+  readonly: false,
+  paginated: false,
+  resolveOptions: false,
   display: 'chips',
   searchable: true,
   disabled: false,

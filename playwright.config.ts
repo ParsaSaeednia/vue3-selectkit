@@ -4,6 +4,20 @@ import { join } from 'node:path'
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
+  workers: 4,
+  projects: [
+    {
+      name: 'chromium',
+      use: {
+        browserName: 'chromium',
+        launchOptions: process.env.BRAVE_EXECUTABLE_PATH
+          ? { executablePath: process.env.BRAVE_EXECUTABLE_PATH }
+          : {},
+      },
+    },
+    { name: 'firefox', use: { browserName: 'firefox' } },
+    { name: 'webkit', use: { browserName: 'webkit' } },
+  ],
   retries: process.env.CI ? 1 : 0,
   outputDir: join(tmpdir(), 'vue3-selectkit-e2e'),
   reporter: 'list',

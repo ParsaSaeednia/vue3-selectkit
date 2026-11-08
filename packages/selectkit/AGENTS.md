@@ -73,6 +73,9 @@ For a single ID, remove `multiple`, use `ref<number | null>(null)` and adjust th
 
 - Search is opt-in with `searchable`. Local filtering can be customized with `filter-option` or disabled with `:filterable="false"`.
 - `show-select-all` works only with `multiple`. It toggles enabled matching options across the complete loaded list, including virtualized rows, and preserves selections outside the search. It does not select unloaded server records. `max-selected` constrains selections and may disable the action.
+- Use `readonly` to prevent edits while retaining focus, search and native submission. Custom slots receive `disabled: true` when disabled or read-only.
+- Limit displayed chips with `:max-visible-tags="3"`; `#tag-overflow` receives `{ count, options, values }`. This does not limit selected or submitted values.
+- Add `show-group-select` with `multiple` and `group-by` for group bulk actions across matching enabled loaded options.
 - Group with `group-by`; disable records with `get-option-disabled` or the option's `disabled` field. `disabled` disables the whole control.
 - `clearable`, `placeholder`, `open-on-focus`, `close-on-select`, `placement` (`auto`, `top`, `bottom`), `teleport`, and `max-height` control interaction and placement. Single mode closes after selecting by default; multiple mode stays open.
 - Enable `virtual` for large lists; `estimate-option-height` is an estimate, and custom rows are measured. Do not implement bulk actions using only mounted DOM rows.
@@ -82,19 +85,19 @@ For a single ID, remove `multiple`, use `ref<number | null>(null)` and adjust th
 
 Use `load-options(query, { signal })` for built-in loading. The first opening loads immediately; later searches debounce by 250 ms by default. `debounce` and `min-search-length` are configurable. Pass the signal to fetch, throw on failed HTTP responses, and return options of the declared type. The component cancels outdated requests and ignores stale responses. It preserves server order without additional local filtering.
 
-Seed `options` with records for preselected remote IDs so labels are available before loading. Selected records remain available when results change. When managing requests externally, supply `options`, `loading`, and `@search`, set `:filterable="false"` for server-filtered results, and implement cancellation/error handling in the application.
+Use `resolve-options(values, { signal })` to resolve missing selected records before opening without changing the model. Values have the projected model type; return matching options. Handle `resolve-error` as unknown; the error slot exposes `source: 'resolve'` and `retry`. Seeding `options` remains supported. Selected records remain available when results change. When managing requests externally, supply `options`, `loading`, and `@search`, set `:filterable="false"` for server-filtered results, and implement cancellation/error handling in the application.
 
 `create-option(query, { signal })` returns a typed option synchronously or asynchronously. It adds and selects the result, prevents duplicate creation, and emits `create`; the consuming application owns persistence. Return the server's saved record when persistence must complete before selection. Do not save it again in `@create` if the callback already saved it.
 
 ## Events and rendering slots
 
-- `v-model` uses `update:modelValue`. `change(value, detail)` describes selection actions, with mapped values plus `detail.reason` and affected `detail.options`. External model updates do not echo change events. Change reasons are `select`, `deselect`, `clear`, `select-all`, `deselect-all`, `create`, and `reset`.
-- Other events are `search(query)`, `open()`, `close()`, `focus(event)`, `blur(event)`, `create(option)`, `load-error(error)`, and `create-error(error)`. Handle errors as `unknown`. Cancellations do not emit load errors.
+- `v-model` uses `update:modelValue`. `change(value, detail)` describes selection actions, with mapped values plus `detail.reason` and affected `detail.options`. External model updates do not echo change events. Change reasons are `select`, `deselect`, `clear`, `select-all`, `deselect-all`, `select-group`, `deselect-group`, `create`, and `reset`.
+- Other events are `search(query)`, `open()`, `close()`, `focus(event)`, `blur(event)`, `create(option)`, `load-error(error)`, `create-error(error)`, and `resolve-error(error)`. Handle errors as `unknown`. Cancellations do not emit load errors.
 - `#option` receives `{ option, value, label, selected, highlighted, disabled }`; keep its content noninteractive so listbox keyboard behavior remains intact.
 - `#single-value` and `#tag` receive `{ option, value, label, disabled, remove }`. `#tag` customizes tag contents; the default remove control remains available.
 - `#selection` replaces the complete selected display and receives `{ options, values, remove, clear, disabled }`. If adding custom controls, honor `disabled` and provide accessible labels.
-- Other slots: `#group-label`, `#select-all`, `#create-option`, `#loading`, `#empty`, `#no-results`, `#error`, `#header`, and `#footer`. Check installed declarations for their exact slot props. The error slot exposes `retry` and a `source` of `load` or `create`.
-- Use a component ref typed with the exported `SelectExposed` type for `focus()`, `blur()`, `open()`, `close()`, and `clear()`.
+- Other slots: `#group-label`, `#select-all`, `#create-option`, `#loading`, `#empty`, `#no-results`, `#error`, `#header`, and `#footer`. Check installed declarations for their exact slot props. The error slot exposes `retry` and a `source` of `load`, `create`, or `resolve`.
+- Use a component ref typed with the exported `SelectExposed` type for `focus()`, `blur()`, `open()`, `close()`, `clear()`, and `loadMore()`.
 
 ## Styling and forms
 
@@ -109,3 +112,10 @@ Seed `options` with records for preselected remote IDs so labels are available b
 ## Before finishing an application change
 
 Run the consuming project's existing type check, build and relevant tests. Exercise the requested selection mode, clearing, keyboard interaction, disabled/required behavior, and any changed async or RTL path. Verify that the model stores the requested shape and that slot customization only changes presentation. Use the installed types and documentation to resolve API uncertainty instead of widening types to `any`.
+
+## Version 0.2 APIs
+
+- Existing array loaders remain supported. For pagination return `{ options, nextCursor }`; `context.cursor` is undefined on the first page and holds the returned cursor on later pages. `LoadOptionsContext` and `OptionsPage<T>` are exported types. Omit or null the next cursor to finish. Scrolling or the accessible Load more button appends pages; retries preserve earlier pages and the failing cursor. Query changes abort/reset the page sequence. Select all and group actions only include loaded options.
+- Localize count announcements with `messages.selectedCount(count)`, tag summaries with `messages.moreSelected(count)` and group action names with `messages.selectGroup(label)`. Additional strings: `placeholder`, `options`, `groups`, `loadMore`, `resolveError`, `duplicate`.
+- New class parts: `groupSelect`, `tagOverflow`, `loadMore`. New slots: `group-select` (`label`, `checked`, `mixed`, `disabled`) and `tag-overflow` (`count`, `options`, `values`).
+- Reset invalidates pending creation; late aborted callbacks cannot update selection or clear a newer request's busy state. Keep honoring AbortSignal in application network requests.

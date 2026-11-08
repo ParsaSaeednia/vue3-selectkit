@@ -4,8 +4,22 @@ Typed values, flexible rendering, and the familiar simplicity of a select.
 
 ## Install
 
+Using npm:
+
 ```sh
 npm install vue3-selectkit
+```
+
+Using pnpm:
+
+```sh
+pnpm add vue3-selectkit
+```
+
+Using Bun:
+
+```sh
+bun add vue3-selectkit
 ```
 
 Requires Vue 3.5 or newer. JavaScript applications work too; TypeScript adds inferred models, callbacks, events, and slots.
@@ -27,7 +41,7 @@ const fruits = ['Apple', 'Pear', 'Peach']
 </template>
 ```
 
-Single selection stores a value or `null`. Add `multiple` and use an array for multiple selection. Search, Select all, virtual scrolling, and option creation are opt-in.
+Single selection stores a value or `null`. Add `multiple` and use an array for multiple selection. Search, Select all, group selection, virtual scrolling, and option creation are opt-in. Version 0.2 adds paginated remote loading, automatic saved-value resolution, read-only mode, and tag overflow. See [Advanced features](./advanced-features).
 
 ## Make it yours
 

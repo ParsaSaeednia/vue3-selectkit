@@ -44,3 +44,11 @@ Supply `options`, `loading`, and `@search`, and set `:filterable="false"` for se
 Seed options for preselected IDs. Selected records remain cached while searching. Customize `#loading` and `#error="{ error, retry }"`; the default error UI includes a retry action. `@load-error` excludes cancellations.
 
 Select all operates on the returned loaded options, not a server's complete dataset. Pagination and persistence remain application responsibilities.
+
+## Pagination and saved IDs
+
+For cursor pagination, return `{ options, nextCursor }` from the loader. Its context includes the next `cursor` alongside `signal`. A visible **Load more** button and scrolling near the end both append results. Bulk selection affects all matching loaded pages, never unloaded server records.
+
+Use `resolve-options(values, { signal })` to hydrate missing selected records without manually seeding `options`. It runs before the dropdown opens, cancels stale requests when selection changes, and emits `resolve-error` on failure. The error slot exposes `source: 'resolve'` and `retry`.
+
+See [Advanced features](./advanced-features) for complete typed examples.

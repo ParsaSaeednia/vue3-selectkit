@@ -23,3 +23,5 @@ Set `name` to include the selection in FormData. Primitive model values serializ
 Required controls participate in native constraint validation and focus the visible select when invalid. Disabled controls do not submit values. Form reset restores the model captured when the component mounted and emits a change with reason `reset`. Preventing the reset event prevents the component reset too.
 
 The optional `form` prop associates the component with an external form ID. For object IDs loaded remotely, seed the option records before mounting so both labels and serialization are available.
+
+Form ownership is tracked when `form` changes, the control moves, or its form appears after mounting. Reset cancels pending creation before restoring the mounted selection. Reset is supported even without a `name`; values without a name do not submit. `readonly` values continue to submit, and `max-visible-tags` never truncates FormData.

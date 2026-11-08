@@ -2,10 +2,15 @@ import { test, expect } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-test('preview, matching Select all, slots, copy and console health', async ({ page, context }) => {
+test('preview, matching Select all, slots, copy and console health', async ({
+  page,
+  context,
+  browserName,
+}) => {
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(e.message))
-  await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+  if (browserName === 'chromium')
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'])
   await page.goto('./')
   await expect(page.getByRole('heading', { name: 'Build your select.' })).toBeVisible()
   const search = page.getByRole('combobox', { name: 'Search options...' })
@@ -19,9 +24,11 @@ test('preview, matching Select all, slots, copy and console health', async ({ pa
   await expect(page.locator('.vsk-selection')).toHaveText('3 selected')
   await page.getByRole('button', { name: 'Copy code' }).click()
   await expect(page.getByRole('button', { name: 'Copied!' })).toBeVisible()
-  const copied = await page.evaluate(() => navigator.clipboard.readText())
-  expect(copied).toContain('#selection')
-  expect(copied).toContain("from 'vue3-selectkit'")
+  if (browserName === 'chromium') {
+    const copied = await page.evaluate(() => navigator.clipboard.readText())
+    expect(copied).toContain('#selection')
+    expect(copied).toContain("from 'vue3-selectkit'")
+  }
   expect(errors).toEqual([])
 })
 test('keyboard and full-list virtualization stay bounded and accessible', async ({ page }) => {
@@ -93,4 +100,89 @@ test('mobile page fits and the inspector remains usable', async ({ page }) => {
   await page.getByRole('button', { name: 'Menu', exact: true }).click()
   await page.getByRole('link', { name: 'RTL', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Right-to-left, naturally' })).toBeVisible()
+})
+
+test('open-on-focus stays open on the first pointer click', async ({ page }) => {
+  await page.goto('./')
+  await expect(page.locator('.vsk-search')).toBeVisible()
+  await page.getByText('Advanced behavior', { exact: true }).click()
+  await page.getByRole('switch', { name: 'Open on focus', exact: true }).click()
+  await page.locator('.vsk-trigger').click()
+  await expect(page.locator('.vsk-search')).toBeVisible()
+  await page.locator('.vsk-trigger').click()
+  await expect(page.locator('.vsk-listbox')).toHaveCount(0)
+  await page.getByRole('heading', { name: 'Build your select.' }).click()
+  await page.locator('.vsk-label').click()
+  await expect(page.locator('.vsk-search')).toBeVisible()
+})
+
+test('pagination appends pages and restarts cleanly when searching', async ({ page }) => {
+  await page.goto('./')
+  await page.getByText('Advanced behavior', { exact: true }).click()
+  await page.getByRole('switch', { name: 'Paginated loading', exact: true }).click()
+  await page.locator('.vsk-trigger').click()
+  await expect(page.locator('.vsk-listbox [role=option]')).toHaveCount(2)
+  await page.getByRole('button', { name: 'Load more', exact: true }).click()
+  await expect(page.locator('.vsk-listbox [role=option]')).toHaveCount(4)
+  await page.locator('.vsk-load-more').focus()
+  await page.locator('.vsk-load-more').press('Enter')
+  await expect(page.locator('.vsk-listbox [role=option]')).toHaveCount(6)
+  await expect(page.locator('.vsk-search')).toBeFocused()
+  await page.locator('.vsk-search').fill('Angular')
+  await expect(page.locator('.vsk-listbox [role=option]')).toHaveCount(1)
+  await expect(page.locator('.vsk-listbox [role=option]')).toContainText('Angular')
+  await expect(page.locator('.vsk-load-more')).toHaveCount(0)
+  await expect(page.getByTestId('selected-value')).toHaveText('[1,3]')
+})
+
+test('group actions select only enabled group records and remain accessible', async ({ page }) => {
+  await page.goto('./')
+  await page.getByText('Advanced behavior', { exact: true }).click()
+  await page.getByRole('switch', { name: 'Group options', exact: true }).click()
+  await page.getByRole('switch', { name: 'Group selection', exact: true }).click()
+  await page.locator('.vsk-trigger').click()
+  const group = page.getByRole('checkbox', { name: 'Select group Component', exact: true })
+  await group.click()
+  await expect(page.getByTestId('selected-value')).toHaveText('[1,3,2,4]')
+  await expect(group).toHaveAttribute('aria-checked', 'true')
+  expect(
+    (await new AxeBuilder({ page }).include('.preview-section').analyze()).violations.map(
+      (v) => v.id,
+    ),
+  ).toEqual([])
+  await group.click()
+  await expect(page.getByTestId('selected-value')).toHaveText('[1,3]')
+})
+
+test('read-only mode and tag overflow preserve the complete selection', async ({ page }) => {
+  await page.goto('./')
+  await page.getByLabel('Visible tags', { exact: true }).fill('1')
+  await expect(page.locator('.vsk-tag')).toHaveCount(1)
+  await expect(page.locator('.vsk-tag-overflow')).toHaveText('+1 more')
+  await page.getByRole('switch', { name: 'Read only', exact: true }).click()
+  await expect(page.locator('.vsk-clear')).toBeDisabled()
+  await page.locator('.vsk-control').click()
+  await page.locator('.vsk-search').fill('React')
+  await page.locator('.vsk-search').press('Enter')
+  await expect(page.getByTestId('selected-value')).toHaveText('[1,3]')
+  await expect(page.locator('.generated-code')).toContainText('readonly')
+})
+
+test('saved-value resolution and installation documentation are available', async ({ page }) => {
+  await page.goto('./')
+  await page.getByText('Advanced behavior', { exact: true }).click()
+  await page.getByRole('switch', { name: 'Resolve saved values', exact: true }).click()
+  await expect(page.locator('.vsk-selection')).toContainText('Vue')
+  await expect(page.locator('.vsk-selection')).toContainText('Svelte')
+  await expect(page.locator('.generated-code')).toContainText(':resolve-options="resolveOptions"')
+  await page.getByRole('link', { name: 'Getting started', exact: true }).click()
+  await expect(page.locator('main')).toContainText('npm install vue3-selectkit')
+  // Installation commands remain visible and copyable with the custom docs theme.
+  await expect(page.locator('main')).toContainText('pnpm add vue3-selectkit')
+  await expect(page.locator('main')).toContainText('bun add vue3-selectkit')
+  await page
+    .getByRole('complementary', { name: 'Documentation navigation' })
+    .getByRole('link', { name: 'Advanced features', exact: true })
+    .click()
+  await expect(page.getByRole('heading', { name: 'More control, less wiring' })).toBeVisible()
 })

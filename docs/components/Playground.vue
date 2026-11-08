@@ -13,6 +13,7 @@ import {
 import { VueMultiselect } from 'vue3-selectkit'
 import type {
   AsyncContext,
+  LoadOptionsContext,
   OptionSlot,
   SelectExposed,
   SelectionSlot,
@@ -76,7 +77,7 @@ function record(name: string, ...args: unknown[]) {
     ...log.value,
   ].slice(0, 20)
 }
-async function loader(query: string, { signal }: AsyncContext) {
+async function loader(query: string, { signal, cursor }: LoadOptionsContext) {
   await new Promise<void>((resolve, reject) => {
     const timeout = setTimeout(resolve, 350)
     signal.addEventListener(
@@ -88,7 +89,23 @@ async function loader(query: string, { signal }: AsyncContext) {
       { once: true },
     )
   })
-  return allOptions.value.filter((o) => o.name.toLowerCase().includes(query.toLowerCase()))
+  const matches = allOptions.value.filter((o) => o.name.toLowerCase().includes(query.toLowerCase()))
+  if (!config.paginated) return matches
+  const start = Number(cursor ?? 0)
+  const end = start + 2
+  return { options: matches.slice(start, end), nextCursor: end < matches.length ? end : null }
+}
+async function resolveOptions(values: readonly unknown[], { signal }: AsyncContext) {
+  signal.throwIfAborted()
+  return allOptions.value.filter((o) =>
+    values.some((value) =>
+      config.storedValue === 'id'
+        ? value === o.id
+        : config.storedValue === 'name'
+          ? value === o.name
+          : (value as Framework).id === o.id,
+    ),
+  )
 }
 let nextId = 10000
 const createOption = (name: string): Framework => ({ id: ++nextId, name, category: 'Custom' })
@@ -97,7 +114,9 @@ const bindings = computed(() => ({
   'onUpdate:modelValue': (value: unknown) => {
     selected.value = value
   },
-  options: allOptions.value,
+  options: config.resolveOptions
+    ? allOptions.value.filter((o) => o.id !== 1 && o.id !== 3)
+    : allOptions.value,
   optionKey: 'id',
   labelKey: 'name',
   label: config.rtl ? 'فریم‌ورک‌ها' : 'Frameworks',
@@ -106,6 +125,10 @@ const bindings = computed(() => ({
   multiple: config.multiple,
   searchable: config.searchable,
   showSelectAll: config.showSelectAll,
+  showGroupSelect: config.showGroupSelect,
+  maxVisibleTags: Number(config.maxVisibleTags),
+  readonly: config.readonly,
+  resolveOptions: config.resolveOptions ? resolveOptions : undefined,
   disabled: config.disabled,
   loading: config.loading,
   virtual: config.virtual,
@@ -119,7 +142,7 @@ const bindings = computed(() => ({
   dir: config.rtl ? 'rtl' : undefined,
   unstyled: config.unstyled,
   groupBy: config.groupBy ? 'category' : undefined,
-  loadOptions: config.loadOptions ? loader : undefined,
+  loadOptions: config.loadOptions || config.paginated ? loader : undefined,
   createOption: config.createOption ? createOption : undefined,
   ...Object.fromEntries(
     config.events.map((name) => [
@@ -334,6 +357,15 @@ onMounted(() => {
               </select></label
             >
           </template>
+          <label v-if="group === 'Selection'" class="control-row"
+            ><span>Visible tags</span
+            ><input
+              v-model.number="config.maxVisibleTags"
+              aria-label="Visible tags"
+              type="number"
+              min="0"
+              max="100"
+          /></label>
           <label v-if="group === 'Behavior'" class="control-row"
             ><span>Dropdown placement</span
             ><select v-model="config.placement" aria-label="Dropdown placement">
@@ -374,6 +406,24 @@ onMounted(() => {
               :aria-checked="booleanValue(item.key)"
               class="switch"
               @click="toggle(item.key)"
+            >
+              <span></span></button
+          ></label>
+          <label
+            v-for="item in [
+              { key: 'paginated', label: 'Paginated loading' },
+              { key: 'resolveOptions', label: 'Resolve saved values' },
+            ]"
+            :key="item.key"
+            class="control-row"
+            ><span>{{ item.label }}</span
+            ><button
+              type="button"
+              role="switch"
+              :aria-label="item.label"
+              :aria-checked="booleanValue(item.key as keyof PlaygroundConfig)"
+              class="switch"
+              @click="toggle(item.key as keyof PlaygroundConfig)"
             >
               <span></span></button
           ></label>
