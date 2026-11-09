@@ -2,7 +2,7 @@
 
 A typed, accessible Vue 3 select that works your way. Start with an options array, then add search, multiple selection, custom slots, remote loading, creation, or virtualization.
 
-[Documentation & playground](https://parsasaeednia.github.io/vue3-selectkit/) · [API](https://parsasaeednia.github.io/vue3-selectkit/api/props) · [GitHub](https://github.com/ParsaSaeednia/vue3-selectkit)
+[Documentation & playground](https://parsasaeednia.github.io/vue3-selectkit/) · [API](https://parsasaeednia.github.io/vue3-selectkit/api/props) · [npm package](https://www.npmjs.com/package/vue3-selectkit) · [GitHub](https://github.com/ParsaSaeednia/vue3-selectkit)
 
 ```sh
 # npm
