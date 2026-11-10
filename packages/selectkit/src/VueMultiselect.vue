@@ -20,8 +20,8 @@ import {
   watch,
   type StyleValue,
 } from 'vue'
-import { autoUpdate, flip, offset, shift, size, useFloating } from '@floating-ui/vue'
-import { defaultRangeExtractor, useVirtualizer } from '@tanstack/vue-virtual'
+import { useDropdownPosition } from './composables/useDropdownPosition'
+import { useVirtualList } from './composables/useVirtualList'
 import { useAsyncTask } from './composables/useAsyncTask'
 import { useRemoteOptions } from './composables/useRemoteOptions'
 import { useFormReset } from './composables/useFormReset'
@@ -104,7 +104,6 @@ const control = ref<HTMLElement>()
 const trigger = ref<HTMLButtonElement>()
 const popup = ref<HTMLElement>()
 const scrollElement = ref<HTMLElement>()
-const availableListHeight = ref<number>()
 const searchInput = ref<HTMLInputElement>()
 const nativeSelect = ref<HTMLSelectElement>()
 const loadMoreButton = ref<HTMLButtonElement>()
@@ -410,48 +409,28 @@ const navigable = computed(() =>
 const activeRow = computed(() =>
   rows.value.findIndex((r) => r.kind === 'option' && r.index === active.value),
 )
-const virtualizer = useVirtualizer(
-  computed(() => ({
-    enabled: !!props.virtual && opened.value,
-    count: rows.value.length,
-    getScrollElement: () => scrollElement.value ?? null,
-    estimateSize: (index: number) =>
-      rows.value[index]?.kind === 'group' ? 28 : (props.estimateOptionHeight ?? 36),
-    getItemKey: (index: number) => `${rows.value[index]?.kind}-${rows.value[index]?.key}`,
-    overscan: 5,
-    rangeExtractor: (range: Parameters<typeof defaultRangeExtractor>[0]) =>
-      [
-        ...new Set([
-          ...defaultRangeExtractor(range),
-          ...(activeRow.value >= 0 ? [activeRow.value] : []),
-        ]),
-      ].sort((a, b) => a - b),
-  })),
-)
+const virtualList = useVirtualList({
+  rows,
+  element: scrollElement,
+  activeIndex: activeRow,
+  enabled: () => !!props.virtual && opened.value,
+  estimate: (row) => (row.kind === 'group' ? 28 : (props.estimateOptionHeight ?? 36)),
+  key: (row) => `${row.kind}-${row.key}`,
+})
+const { totalSize, measure } = virtualList
 const renderedRows = computed(() =>
   props.virtual
-    ? virtualizer.value.getVirtualItems().map((v) => ({ row: rows.value[v.index]!, virtual: v }))
+    ? virtualList.items.value.map((v) => ({ row: rows.value[v.index]!, virtual: v }))
     : rows.value.map((row) => ({ row, virtual: undefined })),
 )
-function measure(el: unknown) {
-  if (el instanceof HTMLElement && props.virtual) virtualizer.value.measureElement(el)
-}
-const { floatingStyles } = useFloating(control, popup, {
-  placement: computed(() => (props.placement === 'top' ? 'top-start' : 'bottom-start')),
-  strategy: computed(() => (props.teleport ? 'fixed' : 'absolute')),
-  whileElementsMounted: autoUpdate,
-  middleware: computed(() => [
-    offset(4),
-    ...(props.placement === 'auto' || !props.placement ? [flip()] : []),
-    shift({ padding: 8 }),
-    size({
-      apply({ rects, elements, availableHeight }) {
-        const chrome = elements.floating.offsetHeight - (scrollElement.value?.offsetHeight ?? 0)
-        availableListHeight.value = Math.max(40, availableHeight - chrome)
-        elements.floating.style.width = `${rects.reference.width}px`
-      },
-    }),
-  ]),
+const { floatingStyles, availableListHeight } = useDropdownPosition({
+  control,
+  popup,
+  list: scrollElement,
+  placement: () => props.placement,
+  teleport: () => props.teleport,
+  maxHeight: () => props.maxHeight ?? 256,
+  direction: () => props.dir ?? inheritedDir.value,
 })
 function commit(next: Value[], reason: ChangeReason, options: T[]) {
   const model = (props.multiple ? [...next] : (next[0] ?? null)) as Model
@@ -580,8 +559,7 @@ function blur() {
 }
 function scrollActive() {
   void nextTick(() => {
-    if (props.virtual && activeRow.value >= 0)
-      virtualizer.value.scrollToIndex(activeRow.value, { align: 'auto' })
+    if (props.virtual && activeRow.value >= 0) virtualList.scrollToIndex(activeRow.value)
     else
       popup.value
         ?.querySelector(`[data-option-index="${active.value}"]`)
@@ -1040,12 +1018,15 @@ defineExpose({ focus, blur, open, close, clear, loadMore })
           :aria-multiselectable="multiple ? true : undefined"
           @scroll.passive="onListScroll"
           :aria-busy="busy"
-          :style="{ maxHeight: `${Math.min(maxHeight ?? 256, availableListHeight ?? Infinity)}px` }"
+          :style="{
+            maxHeight: `${Math.min(maxHeight ?? 256, availableListHeight ?? Infinity)}px`,
+            overflowAnchor: virtual ? 'none' : undefined,
+          }"
         >
           <div
             :style="
               virtual
-                ? { height: `${virtualizer.getTotalSize()}px`, position: 'relative', width: '100%' }
+                ? { height: `${totalSize}px`, position: 'relative', width: '100%' }
                 : undefined
             "
           >

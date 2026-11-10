@@ -27,11 +27,20 @@ export default defineConfig({
     colorScheme: 'light',
     trace: 'retain-on-failure',
   },
-  webServer: process.env.TEST_BASE_URL
-    ? undefined
-    : {
-        command: 'npm run dev',
-        url: 'http://127.0.0.1:5173/vue3-selectkit/',
-        reuseExistingServer: !process.env.CI,
-      },
+  webServer: [
+    ...(process.env.TEST_BASE_URL
+      ? []
+      : [
+          {
+            command: 'npm run dev',
+            url: 'http://127.0.0.1:5173/vue3-selectkit/',
+            reuseExistingServer: !process.env.CI,
+          },
+        ]),
+    {
+      command: 'npx vite --config tests/browser/vite.config.ts',
+      url: 'http://127.0.0.1:5174',
+      reuseExistingServer: !process.env.CI,
+    },
+  ],
 })

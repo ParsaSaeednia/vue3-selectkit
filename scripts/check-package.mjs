@@ -105,5 +105,6 @@ execFileSync(
   ],
   { cwd: dir, stdio: 'inherit' },
 )
-if (manifest.dependencies?.vue) throw new Error('Vue must remain a peer dependency')
+if (Object.keys(manifest.dependencies ?? {}).length)
+  throw new Error('SelectKit must have no runtime dependencies; Vue must remain a peer dependency')
 console.log(`Clean consumer passed: ${manifest.name}@${manifest.version}`)

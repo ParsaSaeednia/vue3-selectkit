@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.2
+
+- Replace Floating UI and TanStack Virtual with built-in dropdown positioning and measured virtual scrolling. Vue remains a peer dependency; the package has no runtime dependencies.
+- Preserve automatic/explicit placement, viewport and clipping-container sizing, RTL alignment, transformed teleport targets, and updates on scroll, resize and layout shifts.
+- Preserve measured custom/grouped rows, full-list keyboard navigation, active-descendant references, filtering and bulk selection for virtual lists.
+- Add browser regressions for positioning, dynamic row sizes, teleport targets and resizing clipping containers, and enforce the dependency-free package manifest in clean-consumer checks.
+
 ## 0.2.1
 
 - Fix Vue's runtime Boolean casting for the generic `multiple` prop. The template shorthand now preserves array models, selected labels, bulk actions and repeated native form values, while explicit true/false and dynamic boolean bindings retain their types.

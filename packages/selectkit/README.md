@@ -58,7 +58,7 @@ Omit `value-key` to keep whole option objects. Use a scalar or `null` in single 
 - Automatic resolution of saved IDs through `resolve-options`, without seeding option records.
 - Read-only mode, group-level bulk actions, and configurable tag overflow.
 - Typed synchronous/asynchronous creation callbacks; your application owns persistence.
-- Measured virtual scrolling powered by TanStack Virtual.
+- Built-in measured virtual scrolling and dropdown positioning; no runtime dependencies beyond Vue.
 - RTL, keyboard navigation, accessible labels and native form submission/reset.
 - CSS variables, part classes, unstyled mode and typed rendering slots.
 
@@ -71,6 +71,8 @@ The normal `multiple` shorthand works in 0.2.1; `:multiple="true"` remains valid
 Production SSR, hydration, type checking and browser interactions are checked against Nuxt 3.21.11 and 4.6.4 using the packed library. See the [Nuxt setup guide](https://parsasaeednia.github.io/vue3-selectkit/guide/nuxt) for complete instructions, remote data and SSR details. Nuxt 2 is unsupported.
 
 ## New in 0.2
+
+Version 0.2.2 includes built-in dropdown positioning and measured virtual scrolling, removing all runtime dependencies while keeping Vue as a peer dependency. Existing component props, events and slots remain supported.
 
 - `load-options` still accepts a plain options array. Return `{ options, nextCursor }` to load pages; the next request receives `context.cursor`. Scrolling near the end or the keyboard-accessible **Load more** button appends the next page. Omit `nextCursor` or return `null` at the end.
 - `resolve-options(values, { signal })` fetches records for missing selected values automatically, before opening. Return option records; the stored values remain unchanged. Use `value-key` or `get-option-value` to map saved IDs.

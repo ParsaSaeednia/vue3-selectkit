@@ -1,6 +1,6 @@
 {
   "name": "vue3-selectkit",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A typed, accessible Vue 3 select with flexible values, slots, async search and virtualization.",
   "type": "module",
   "license": "MIT",
@@ -49,10 +49,6 @@
   ],
   "peerDependencies": {
     "vue": ">=3.5.0 <4"
-  },
-  "dependencies": {
-    "@floating-ui/vue": "^1.1.9",
-    "@tanstack/vue-virtual": "^3.13.47"
   },
   "scripts": {
     "build": "vite build && vue-tsc -p tsconfig.build.json && node scripts/finish-build.mjs",

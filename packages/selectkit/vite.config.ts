@@ -9,6 +9,6 @@ export default defineConfig({
       fileName: () => 'selectkit.js',
       cssFileName: 'style',
     },
-    rollupOptions: { external: ['vue', '@floating-ui/vue', '@tanstack/vue-virtual'] },
+    rollupOptions: { external: ['vue'] },
   },
 })

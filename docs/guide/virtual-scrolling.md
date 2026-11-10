@@ -23,7 +23,7 @@ Add `virtual` to the same component. No separate component or CSS framework is r
 
 ## Custom rows and groups
 
-TanStack Virtual measures rendered rows, including custom slot contents and group headers. `estimate-option-height` helps the initial measurement; use an estimate close to your custom row height.
+The built-in virtual list measures rendered rows, including custom slot contents and group headers, and updates their measurements when they resize. `estimate-option-height` helps the initial measurement; use an estimate close to your custom row height.
 
 The keyboard-active option stays mounted and is scrolled into view, preserving its accessible active-descendant reference. Home and End navigation operate on the complete list.
 
