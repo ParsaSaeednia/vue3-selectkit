@@ -15,6 +15,8 @@ Build accessible single-select and multiselect inputs for Vue 3.5+ with TypeScri
 Use searchable options, custom slots, async loading with pagination, virtual scrolling,
 RTL layouts and CSS variables to fit your application.
 
+Version 1.0.0 uses Vue's `defineModel()` for selection state. Keep using `v-model` and the existing props, events and slots. See [model ownership and wrapper components](./guide/basic-usage#model-ownership) for binding behavior.
+
 Dropdown positioning and measured virtual scrolling are built in. Vue is the only required peer dependency; the package has no runtime dependencies.
 
 Install with `npm install vue3-selectkit`, then import `VueMultiselect` and `vue3-selectkit/style.css`.

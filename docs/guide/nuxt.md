@@ -2,7 +2,7 @@
 
 vue3-selectkit supports Nuxt 3 and Nuxt 4 with Vue 3.5 or newer. The package is tested in production builds of Nuxt 3.21.11 and 4.6.4, including server rendering, hydration, TypeScript and browser interactions. Nuxt 2 is unsupported.
 
-Use version **0.2.1 or newer**. It fixes the bare `multiple` attribute in compiled Vue templates. On 0.2.0, `:multiple="true"` is a temporary workaround; upgrading lets you use the normal `multiple` shorthand.
+Use **vue3-selectkit 1.0.0** with Vue 3.5 or newer. The normal `multiple` shorthand and `:multiple="true"` both store arrays. On older 0.2.0 installations, use the explicit boolean binding until upgrading.
 
 ## Install
 

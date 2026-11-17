@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.0
+
+- Use Vue's `defineModel` for component model state and updates. Keep typed scalar, array, projected-value and dynamic `multiple` models, plus the public `modelValue` prop and `update:modelValue` event.
+- Keep local selection when no `v-model` is supplied, including clearing, native form submission and reset. Remove the separate local model store.
+- Follow Vue's model ownership rules: a `modelValue` prop without an update listener now initializes editable local state. To keep the parent in control, use `v-model` or provide both `modelValue` and `@update:modelValue`. An explicitly undefined controlled model also waits for the parent's update.
+- Let Vue suppress redundant model updates. `change` still describes each committed selection action, including a reset that restores the current value. External model updates emit neither event.
+- Document wrapper components with `defineModel`, model ownership and the 1.0.0 release across the website, READMEs and packaged agent guide.
+- Add regression tests for local and controlled models, event order, external updates, undefined models and native form reset. Vue 3.5+ remains required; the package has no runtime dependencies.
+
 ## 0.2.2
 
 - Replace Floating UI and TanStack Virtual with built-in dropdown positioning and measured virtual scrolling. Vue remains a peer dependency; the package has no runtime dependencies.

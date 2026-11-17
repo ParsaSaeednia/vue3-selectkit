@@ -46,15 +46,15 @@ function controlAttrs() {
   const { class: _class, style: _style, ...control } = attrs
   return control
 }
-const props = withDefaults(defineProps<SelectProps<T, K, F, M>>(), {
+const props = withDefaults(defineProps<Omit<SelectProps<T, K, F, M>, 'modelValue'>>(), {
   filterable: undefined,
   clearable: true,
   closeOnSelect: undefined,
 })
 type Value = SelectValue<T, K, F>
 type Model = ModelValue<T, K, F, M>
+const model = defineModel<NoInfer<Model>>()
 const emit = defineEmits<{
-  'update:modelValue': [value: Model]
   change: [value: Model, detail: ChangeDetail<T>]
   search: [query: string]
   open: []
@@ -110,8 +110,9 @@ const loadMoreButton = ref<HTMLButtonElement>()
 const retryButton = ref<HTMLButtonElement>()
 const opened = ref(false)
 const query = ref('')
-const localValue = shallowRef<unknown>(props.multiple ? [] : null)
-const value = computed(() => (props.modelValue === undefined ? localValue.value : props.modelValue))
+const value = computed(() =>
+  model.value === undefined ? (props.multiple ? [] : null) : model.value,
+)
 const values = computed<Value[]>(() =>
   props.multiple
     ? Array.isArray(value.value)
@@ -433,11 +434,10 @@ const { floatingStyles, availableListHeight } = useDropdownPosition({
   direction: () => props.dir ?? inheritedDir.value,
 })
 function commit(next: Value[], reason: ChangeReason, options: T[]) {
-  const model = (props.multiple ? [...next] : (next[0] ?? null)) as Model
-  localValue.value = model
+  const nextModel = (props.multiple ? [...next] : (next[0] ?? null)) as Model
   invalid.value = false
-  emit('update:modelValue', model)
-  emit('change', model, { reason, options })
+  model.value = nextModel
+  emit('change', nextModel, { reason, options })
   announcement.value = next.length
     ? messages.value.selectedCount(next.length)
     : messages.value.clear

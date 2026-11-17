@@ -279,7 +279,7 @@ export const propDocs = {
 } satisfies Record<keyof SelectProps<Record<string, unknown>, string, undefined, boolean>, PropInfo>
 export const eventDocs = {
   'update:modelValue':
-    'The complete typed model. Emitted for a committed selection action; use v-model.',
+    'The complete typed model when selection changes; use v-model. Vue suppresses redundant updates. External model changes are not echoed.',
   change:
     '(value, { reason, options }) — reasons: select, deselect, clear, select-all, deselect-all, select-group, deselect-group, create, reset. One event per action; never echoed for external model changes.',
   search:

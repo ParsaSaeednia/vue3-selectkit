@@ -1,5 +1,7 @@
 # Using vue3-selectkit in a Vue application
 
+This guide covers vue3-selectkit 1.0.0.
+
 This guide is for coding agents implementing features with the installed package. Follow the consuming project's instructions and conventions. Make application changes in that project; treat this installed package as a reference.
 
 ## Find the right API
@@ -91,7 +93,9 @@ Use `resolve-options(values, { signal })` to resolve missing selected records be
 
 ## Events and rendering slots
 
-- `v-model` uses `update:modelValue`. `change(value, detail)` describes selection actions, with mapped values plus `detail.reason` and affected `detail.options`. External model updates do not echo change events. Change reasons are `select`, `deselect`, `clear`, `select-all`, `deselect-all`, `select-group`, `deselect-group`, `create`, and `reset`.
+- The component uses `defineModel()` internally. Use `v-model` in consuming templates; `modelValue` and `update:modelValue` remain public. For wrappers, declare a typed `defineModel()` and forward it with `v-model`. Initialize the parent with `null` for single mode or an array for multiple mode.
+- Without `v-model`, selection uses local state; a `modelValue` prop without an update listener supplies the initial value. With both the prop and listener, the parent controls selection and must accept updates, including from an initially undefined value. Use `readonly` to block edits.
+- `update:modelValue` reports model changes; Vue suppresses redundant updates. `change(value, detail)` describes selection actions, with mapped values plus `detail.reason` and affected `detail.options`. External model updates emit neither event. Change reasons are `select`, `deselect`, `clear`, `select-all`, `deselect-all`, `select-group`, `deselect-group`, `create`, and `reset`.
 - Other events are `search(query)`, `open()`, `close()`, `focus(event)`, `blur(event)`, `create(option)`, `load-error(error)`, `create-error(error)`, and `resolve-error(error)`. Handle errors as `unknown`. Cancellations do not emit load errors.
 - `#option` receives `{ option, value, label, selected, highlighted, disabled }`; keep its content noninteractive so listbox keyboard behavior remains intact.
 - `#single-value` and `#tag` receive `{ option, value, label, disabled, remove }`. `#tag` customizes tag contents; the default remove control remains available.
@@ -113,7 +117,7 @@ Use `resolve-options(values, { signal })` to resolve missing selected records be
 
 Run the consuming project's existing type check, build and relevant tests. Exercise the requested selection mode, clearing, keyboard interaction, disabled/required behavior, and any changed async or RTL path. Verify that the model stores the requested shape and that slot customization only changes presentation. Use the installed types and documentation to resolve API uncertainty instead of widening types to `any`.
 
-## Version 0.2 APIs
+## Pagination, resolution and display APIs
 
 - Existing array loaders remain supported. For pagination return `{ options, nextCursor }`; `context.cursor` is undefined on the first page and holds the returned cursor on later pages. `LoadOptionsContext` and `OptionsPage<T>` are exported types. Omit or null the next cursor to finish. Scrolling or the accessible Load more button appends pages; retries preserve earlier pages and the failing cursor. Query changes abort/reset the page sequence. Select all and group actions only include loaded options.
 - Localize count announcements with `messages.selectedCount(count)`, tag summaries with `messages.moreSelected(count)` and group action names with `messages.selectGroup(label)`. Additional strings: `placeholder`, `options`, `groups`, `loadMore`, `resolveError`, `duplicate`.
@@ -122,7 +126,7 @@ Run the consuming project's existing type check, build and relevant tests. Exerc
 
 ## Nuxt 3 and Nuxt 4
 
-- Requires Vue 3.5+; Nuxt 2 is unsupported. Use vue3-selectkit 0.2.1 or newer, which fixes runtime Boolean casting for the generic `multiple` prop. Normal `multiple` and `:multiple="true"` both store arrays. On 0.2.0, use `:multiple="true"` until upgrading. Omitted or bound-false mode stores a scalar/null; keep dynamic models consistent with the mode.
+- Requires Vue 3.5+; Nuxt 2 is unsupported. Use vue3-selectkit 1.0.0. Normal `multiple` and `:multiple="true"` both store arrays. On older 0.2.0 installations, use `:multiple="true"` until upgrading. Omitted or bound-false mode stores a scalar/null; keep dynamic models consistent with the mode.
 - Add `css: ['vue3-selectkit/style.css']` to `nuxt.config.ts`. Explicitly import `VueMultiselect`; the package does not ship a Nuxt auto-import module. Default Nuxt 4 entry is `app/app.vue`; Nuxt 3 uses root `app.vue`. Follow project-specific `srcDir` settings.
 - The component supports SSR and hydration without a client-only wrapper or a custom transpile entry in the tested Nuxt 3.21.11 and 4.6.4 configurations. Seed selected option records during SSR (for example using `useAsyncData`) when initial HTML must contain their labels. The built-in resolver runs after mounting and loaders run when opening/searching on the client.
 - For teleporting, use `teleport="#teleports"`, Nuxt's SSR target. The default keeps the popup in the component. Ensure other targets exist before opening.

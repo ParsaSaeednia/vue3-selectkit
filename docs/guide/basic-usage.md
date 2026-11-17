@@ -26,6 +26,34 @@ const options = ['Vue', 'React', 'Svelte']
 
 The dropdown closes after single selection and stays open for multiple selection. Override `close-on-select` or enable `open-on-focus`. `clearable` defaults to true.
 
+## Model ownership
+
+Use `v-model` to keep the parent in control of the selection. Initialize single models with a value or `null`, and multiple models with an array.
+
+Without `v-model`, the select keeps local state. A `modelValue` prop without an `@update:modelValue` listener supplies its initial value. Later changes to that prop synchronize the local selection. Use `readonly` to block selection edits.
+
+In 1.0.0, a parent that supplies both `modelValue` and `@update:modelValue` controls the displayed selection, including when the value is `undefined`. The parent must accept an emitted update for that selection to appear. This follows Vue's `defineModel()` behavior.
+
+## Wrap a select with defineModel
+
+Use `defineModel()` to expose a model from your own wrapper component. This example stores an array of framework names:
+
+```vue
+<script setup lang="ts">
+import { VueMultiselect } from 'vue3-selectkit'
+import 'vue3-selectkit/style.css'
+
+const selected = defineModel<string[]>({ required: true })
+const options = ['Vue', 'React', 'Svelte']
+</script>
+
+<template>
+  <VueMultiselect v-model="selected" :options="options" multiple label="Frameworks" />
+</template>
+```
+
+Use this wrapper with `v-model` bound to a `ref<string[]>([])` in the parent. For single selection, use `defineModel<string | null>({ required: true })` and remove `multiple`.
+
 ## Search and Select all
 
 Search is case- and diacritic-insensitive. Use `filter-option` for a custom local predicate. Set `filterable="false"` with `v-bind` when the application already filters results.

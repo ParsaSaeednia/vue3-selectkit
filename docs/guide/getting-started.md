@@ -22,7 +22,7 @@ Using Bun:
 bun add vue3-selectkit
 ```
 
-Requires Vue 3.5 or newer. JavaScript applications work too; TypeScript adds inferred models, callbacks, events, and slots.
+Version 1.0.0 requires Vue 3.5 or newer. JavaScript applications work too; TypeScript adds inferred models, callbacks, events, and slots.
 
 Using Nuxt? Follow the [Nuxt 3 and 4 setup guide](./nuxt) for global CSS, component imports, server rendering and teleport configuration.
 
@@ -43,7 +43,9 @@ const fruits = ['Apple', 'Pear', 'Peach']
 </template>
 ```
 
-Single selection stores a value or `null`. Add `multiple` and use an array for multiple selection. Search, Select all, group selection, virtual scrolling, and option creation are opt-in. Version 0.2 adds paginated remote loading, automatic saved-value resolution, read-only mode, and tag overflow. See [Advanced features](./advanced-features).
+Single selection stores a value or `null`. Add `multiple` and use an array for multiple selection. Search, Select all, group selection, virtual scrolling, and option creation are opt-in. Paginated remote loading, automatic saved-value resolution, read-only mode, and tag overflow are also available. See [Advanced features](./advanced-features).
+
+The component uses Vue's `defineModel()` internally. Keep using `v-model` in your application, or use `defineModel()` in a [wrapper component](./basic-usage#wrap-a-select-with-definemodel). The `update:modelValue` event remains part of the public API.
 
 ## Make it yours
 

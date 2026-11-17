@@ -1,6 +1,6 @@
 # More control, less wiring
 
-Version 0.2 adds paged results, saved-value resolution, compact tags, read-only mode and group actions. Existing array loaders and selection defaults keep working.
+Configure paged results, saved-value resolution, compact tags, read-only mode and group actions. These APIs are included in 1.0.0; plain array loaders remain supported.
 
 ## Cursor pagination
 
